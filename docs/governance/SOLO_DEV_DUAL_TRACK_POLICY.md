@@ -1,23 +1,23 @@
 # Solo-Developer Dual-Track Governance Policy
 
 **Document ID:** ASIG-GOV-DT-001  
-**Version:** 0.1  
-**Status:** RATIFIED FOR PREPARATION AND VALIDATION ONLY · NOT ACTIVE FOR EXPERIMENTAL MERGES  
+**Version:** 0.2  
+**Status:** ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY) · NON-AUTHORITATIVE · EFFECTIVE ON `integration` AFTER CLEAN BASELINE-PROMOTION PR MERGE  
 **Repository scope:** `vaidt/Kt-ry-Program` (ASIG engineering controls only)  
 **Policy record:** [PR #12 operational decision](https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660)  
 **Decision date:** 2026-10-17  
-**Normative effect:** NONE ON AURA PROTOCOL; repository-level operational effect is limited to CI/security-infrastructure preparation  
-**Implementation authorization:** LIMITED — isolated CI/security-infrastructure preparation and validation-only branch creation/test PRs from the recorded baseline; experimental merges NOT AUTHORIZED
+**Normative effect:** NONE ON AURA PROTOCOL; repository-level operational effect is limited to non-authoritative R&D experimental merges on `integration` under this policy  
+**Implementation authorization:** ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY) — limited to non-authoritative work on `integration`, effective only after the clean baseline-promotion PR merges with all seven required checks successful; Stage 3, runtime qualification, target-repository changes, release promotion, and AURA Protocol conformance remain NOT AUTHORIZED
 
-> The repository owner recorded limited operational ratification for implementation preparation in PR #12; this document now records a further limited validation authorization. The `integration` ref may be created at exactly `487e63069d18d2ab3f289131e9a5427f0cc61116` solely to run isolated positive/negative CI and security-control PRs. This does not activate experimental merges, change `main` protection, close CAPA NC-ASIG-2026-10-17-PR10, authorize runtime work, or modify AURA Protocol semantics. No experimental code, including Stage 3 architecture, may be merged until every activation gate is evidenced and the validation PRs are closed without merging.
+ > The repository owner previously ratified infrastructure preparation in PR #12 and authorized validation-only controls. The present policy revision records the bounded transition to `ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY)`. This status becomes operational on `integration` only after the clean baseline-promotion PR from `infra/ci-updates` is merged under active ruleset `25306960` with all seven required checks successful. It permits non-authoritative R&D experimentation on `integration` only. It does not change `main` protection, close CAPA NC-ASIG-2026-10-17-PR10, authorize Stage 3 or runtime work, authorize changes to AURA target repositories, establish release provenance, settle the final licensing decision, or modify AURA Protocol semantics.
 
 ## 1. Purpose and decision requested
 
 Define a controlled dual-track workflow for a repository operated by a solo developer, while preserving `main` as the authoritative integration and release boundary.
 
-The recorded decision adopts this policy for infrastructure preparation and a strictly bounded validation phase. The `integration` branch may be created only at the exact SHA stated in Section 9, for validation-control PRs only; it is not authorized for experimental merges. Activation requires the verified controls and completed checklist in Section 9; `integration` must never become an alternate authoritative branch. Dependency-vulnerability, license-policy, and synthetic-artifact SLSA provenance validation evidence are now captured; temporary validation refs were deleted after evidence capture. The SLSA result is limited to the synthetic test artifact and does not establish production/release provenance.
+The recorded decision extends the prior validation-only authorization to a limited R&D-only experimental track after the infrastructure-promotion PR merges. `integration` remains non-authoritative and is governed by ruleset `25306960`; every PR must pass all seven required contexts on its exact head, with no bypass actors, force pushes, branch deletion, or unresolved review conversations. The CodeQL severity threshold has now been read back from the effective ruleset and the CodeQL negative-control PR was API-observed as blocked. Dependency-vulnerability, license-policy, and synthetic-artifact SLSA controls are evidenced. The final legal/repository-license disposition and provenance for actual product/release artifacts remain open and block release/promotion claims, but do not expand this R&D-only authorization.
 
-The decision requested from the competent repository/governance authority is whether to adopt this policy, reject it, or return it for changes. Adoption must be recorded separately from this proposal.
+This revision records the repository owner's explicit instruction of 2026-10-17 to promote the validated infrastructure baseline to `integration` while keeping Stage 3, CAPA closure, protocol conformance, and release qualification separately gated.
 
 ## 2. Principles and precedence
 
@@ -68,7 +68,7 @@ Required invariants:
 
 ### 4.2 Experimental track — proposed `integration`
 
-The branch may be created for validation-only purposes under Section 9 after this authorization is committed. This is a narrow exception for testing controls, not activation for experimental merges; the full activation checklist remains outstanding.
+After the baseline-promotion PR is merged cleanly, `integration` is active for non-authoritative R&D experimental merges only. Each PR must pass the seven required status checks on the exact head; failed, skipped, stale, cancelled, missing, or inconclusive checks block merge. The branch is not a bypass for `main` and provides no release, Stage 3, runtime qualification, or AURA-conformance authorization.
 
 Permitted activity, subject to the repository's accepted licensing and security requirements:
 
@@ -200,23 +200,27 @@ CAPA closure requires its own evidence showing that the corrective actions were 
 
 The PR #11 exception record, if merged in accordance with its explicitly authorized exception procedure, must remain transparently identified as an exception—not as a substitute for independent human review. Any decision to change the underlying policy must state whether it applies prospectively only and how unresolved past deviations will be handled.
 
-## 9. Activation checklist — do not activate experimental merges until every item is evidenced
+## 9. Activation and bounded R&D-only operation — all activation items must be evidenced
 
-### 9.0 Transitional authorization — validation only
+### 9.0 R&D-only activation decision — 2026-10-17
 
-**Validation authorization status: AUTHORIZED FOR VALIDATION ONLY.** This authorization permits only the following bounded actions:
+**Decision:** `ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY)`, effective on `integration` only after the clean baseline-promotion PR from `infra/ci-updates` is merged under ruleset `25306960`.
 
-1. Create `integration` at exactly `487e63069d18d2ab3f289131e9a5427f0cc61116`.
-2. Create an isolated positive-control PR with a harmless change and separate negative-control PRs for CodeQL and Gitleaks. The negative controls must remain isolated to their own temporary branches and must not be merged.
-3. Capture the exact head SHAs, workflow run URLs, required status-check conclusions, CodeQL alert details, ruleset evaluation evidence, and observed mergeability/merge-block state.
-4. Close every validation PR without merging and attempt to delete its temporary source branch. If deletion cannot be completed through the authorized interface, record the ref as ABANDONED, not eligible for reuse or merge, and keep `integration` free of test vectors.
+The prior validation authorization is superseded only for the narrow scope below. The first promotion PR transfers CI/security infrastructure and evidence records; it does not merge Stage 3 architecture, runtime implementation, protocol changes, or release artifacts.
 
-No experimental code, including Stage 3 architecture, may be merged to `integration` until all activation checklist items are satisfied and separately verified. This validation authorization does not permit changes to `main`, does not waive required `main` review, and does not activate runtime or protocol-conformance work.
+Operational conditions:
+
+1. All seven ruleset-required checks must conclude `success` on the exact PR head: `test-and-build (3.11)`, `test-and-build (3.12)`, `test-and-build (3.13)`, `runtime-adapter-integration`, `codeql`, `secret-scan`, and `python-dependency-audit`.
+2. The effective ruleset must remain active with `current_user_can_bypass = never`, no bypass actors, strict status checks, branch deletion/force-push prohibited, pull requests required, and conversations resolved.
+3. Work on `integration` is restricted to non-authoritative R&D prototypes, tests, documentation, adapters, and CI/security infrastructure. Findings in secret scanning, dependency audit, license evaluation, CodeQL alert thresholds, or required checks must be handled by the existing fail-closed controls.
+4. No `main` changes or protection changes are authorized. No Stage 3, target-repository changes, runtime qualification, AURA Protocol conformance claims, product release, or production/release promotion are authorized. CAPA NC-ASIG-2026-10-17-PR10 remains separate and open.
+
+Residual constraints explicitly retained: (a) the repository's final licensing/legal disposition remains open; the validation-only license policy is a fail-closed R&D control, not a legal decision; (b) the synthetic artifact attestation test does not attest actual sdist/wheel/release artifacts; (c) the dedicated GitHub Dependency Review workflow remains absent and its R&D-only compensating-control risk remains documented. These are not treated as closed; they prohibit release/production claims and any expansion beyond the bounded R&D scope.
 
 - [x] Repository-owner decision and limited policy-ratification record identified: PR #12 comment https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660.
-- [x] Policy ratified for infrastructure preparation only on 2026-10-17. This does not authorize integration merges; all remaining activation controls are still required.
+- [x] Prior preparation/validation authorization recorded on 2026-10-17; this policy revision now records the limited R&D-only experimental-merge decision and makes it operational on `integration` only after the clean promotion PR merges.
 - [x] CAPA status and relationship are documented as a separate, unresolved record; no automatic closure is inferred.
-- [x] `integration` branch created at the authorized exact base SHA `487e63069d18d2ab3f289131e9a5427f0cc61116`; the ref remains at that baseline and creation is validation-only.
+- [x] `integration` was created at exact baseline SHA `487e63069d18d2ab3f289131e9a5427f0cc61116`; the baseline is unchanged before promotion. The first non-test PR from `infra/ci-updates` is the separate infrastructure-promotion operation.
 - [x] CI push and pull-request triggers verified for the validation ref: baseline runs and validation PRs invoked the expected workflows; exact run evidence is recorded in §9.1.
 - [x] Required status-check names and provider captured and read back in ruleset ID `25306960`; check contexts are bound to GitHub Actions app ID `15368`.
 - [x] CodeQL/GitHub Advanced Security and Gitleaks positive/negative control behavior tested; evidence and scope are recorded in §9.1.
@@ -295,13 +299,13 @@ See [ATTESTATION_VALIDATION_RECORD.md](ATTESTATION_VALIDATION_RECORD.md) for the
 
 The test artifacts and raw verifier output were uploaded with seven-day retention. The record preserves key digests and certificate fields beyond that temporary window. The attested subject was synthetic; this run does not demonstrate that ASIG's normal sdist, wheel or release outputs currently carry verified provenance.
 
-This closes the **synthetic-artifact R&D attestation validation item** only. It does not authorize synchronizing rules to `integration`, establish a production SLSA level, certify source-code correctness or protocol conformance, or activate Stage 3.
+This closes the **synthetic-artifact R&D attestation validation item** only. It does not establish a production SLSA level, certify source-code correctness or protocol conformance, attest actual release artifacts, or activate Stage 3.
 
 An unchecked item means activation status is `BLOCKED`.
 
 ## 10. Change control, review, and effectiveness
 
-The repository owner recorded limited operational authorization for infrastructure preparation in PR #12; the subsequent validation authorization permitted only the controls recorded in §9.1. These validation results do not activate the `integration` track for experimental merges. The policy becomes operational for experimental merges only after every activation checklist item, including applicable artifact-attestation verification, is evidenced and the authorization scope is separately recorded. A successful CI run or a documentation commit alone is not proof that activation has occurred.
+The repository owner recorded limited preparation authorization in PR #12, followed by the completed validation phase and the bounded R&D-only activation decision in §9.0. The policy's active status on `integration` depends on a successful baseline-promotion PR satisfying every required status check. A status change or documentation commit alone is not evidence of effective activation. This activation does not change `main` protections and does not authorize Stage 3, runtime qualification, protocol conformance, release promotion, or CAPA closure.
 
 Changes to this policy require a pull request, a change rationale, a risk assessment, evidence of the previous effective version, and the appropriate review. Changes that affect `main` protection, release qualification, AURA Protocol semantics, or normative authority require the separate applicable authorization; this document cannot supply it.
 
@@ -311,15 +315,15 @@ Review the policy after a security incident, material change to repository workf
 
 | Item | Status at decision time |
 |---|---|
-| This policy | RATIFIED FOR PREPARATION AND VALIDATION ONLY / EXPERIMENTAL MERGES BLOCKED — DEPENDENCY, LICENSE AND SYNTHETIC-ARTIFACT ATTESTATION TESTS EVIDENCED; PRODUCTION/RELEASE PROVENANCE AND OTHER ACTIVATION CONTROLS REMAIN OPEN |
+| This policy | ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY) — EFFECTIVE ON `integration` AFTER THE CLEAN BASELINE-PROMOTION PR MERGES; RELEASE/PRODUCTION AND PROTOCOL CLAIMS REMAIN BLOCKED |
 | `main` protection | Read back 2026-10-17 and unchanged: protected, admin enforcement true, one required approval, original four required CI contexts |
-| `integration` branch | Created and still at `487e63069d18d2ab3f289131e9a5427f0cc61116`; protected by ruleset 25306960; validation-only, experimental merges blocked |
+| `integration` branch | Base is `487e63069d18d2ab3f289131e9a5427f0cc61116` before promotion; active ruleset 25306960, seven required checks, no bypass actors. R&D-only experimental merges become effective only after clean PR merge. |
 | CI and security evidence checkpoint | [ASIG CI run 39046385384](https://github.com/vaidt/Kt-ry-Program/actions/runs/39046385384) and post-cleanup [ASIG Security Controls run 39047435796](https://github.com/vaidt/Kt-ry-Program/actions/runs/39047435796) passed on `infra/ci-updates` SHA `5ac7ab4af75258e51d39a4b3b5ee358e5cc72192`; §9.1 records the earlier failed scan and its subsequent resolution. |
 | CodeQL | Ruleset 25306960 has `security_alerts_threshold = high_or_higher`; PR #15 returned one critical `py/code-injection` finding, a failing GitHub Advanced Security `CodeQL` check, and API-observed `blocked` mergeability. See §9.1; no test PR merged. |
 | Gitleaks | Post-cleanup full-history scan [run 39047435796](https://github.com/vaidt/Kt-ry-Program/actions/runs/39047435796) passed, including the `Scan full Git history (redacted)` step. The three prior validation refs were absent at read-back. The later pip-audit negative-control ref was also deleted after its evidence was preserved; the subsequent REST GET returned `404 Not Found`. License-test ref `validation/license-negative-control` was likewise deleted after PR #17 evidence capture and verified absent by REST 404 and branch inventory. |
 | Python dependency audit | Baseline audit in [run 39047435796](https://github.com/vaidt/Kt-ry-Program/actions/runs/39047435796) passed. Negative-control PR #16 caused the required audit to fail with 18 known findings for `urllib3==1.26.15`; PR was blocked and closed without merging. See §9.2. |
 | License policy | Validation-only negative-control PR #17 emitted `LICENSE_POLICY_BANNED` for the synthetic GPLv3 fixture; required `python-dependency-audit` failed and PR was API-observed as blocked, then closed without merge. The isolated source ref was deleted and verified absent. See §9.3 and [LICENSE_POLICY_VALIDATION_RECORD.md](LICENSE_POLICY_VALIDATION_RECORD.md). The final legal/repository-license disposition remains OPEN. |
-| Integration ruleset | Active, ID `25306960`, targeted only to `refs/heads/integration`; verified by read-back. No bypass actors. The branch exists at the authorized validation baseline and remains restricted to validation; experimental merges are not authorized. |
+| Integration ruleset | Active, ID `25306960`, targets only `refs/heads/integration`, `current_user_can_bypass = never`, no bypass actors, strict required statuses and CodeQL `security_alerts_threshold = high_or_higher`. Required contexts: `test-and-build (3.11)`, `test-and-build (3.12)`, `test-and-build (3.13)`, `runtime-adapter-integration`, `codeql`, `secret-scan`, `python-dependency-audit`. |
 | Dedicated Dependency Review | Absent; temporary R&D-only residual risk in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md) |
 | Sigstore / SLSA | [ATTESTATION_VALIDATION_RECORD.md](ATTESTATION_VALIDATION_RECORD.md) records the synthetic-artifact provenance validation in §9.4. The read-only source-inventory attestation remains separate; no product release artifact has been attested by this test. |
 | CAPA NC-ASIG-2026-10-17-PR10 | Separate and open; not closed by this policy |
@@ -327,4 +331,4 @@ Review the policy after a security incident, material change to repository workf
 
 ---
 
-**End of policy.** The positive control and the CodeQL, Gitleaks, dependency-vulnerability, license-policy, and synthetic-artifact SLSA controls have produced the results recorded in §§9.1–9.4; all validation PRs were closed without merging. The earlier validation refs were deleted after evidence capture and the post-cleanup full-history Gitleaks scan passed in run 39047435796. The pip-audit, license, and SLSA attestation test refs were deleted and verified absent by REST 404 and branch inventory. The synthetic artifact's signature, signer workflow, source ref/commit, SLSA v1 predicate, Rekor timestamp, and SHA-256 subject digest passed CLI verification; this does not prove provenance for actual release artifacts. The current status remains **NOT ACTIVE FOR EXPERIMENTAL MERGES** because remaining activation requirements, including the separate CodeQL alert-enforcement gap, final license-policy/legal disposition, and production/release assurance, remain unresolved. `main` and `integration` were not changed by the validation PRs; Stage 3 remains unauthorized by this policy.
+**End of policy.** The positive control and the CodeQL, Gitleaks, dependency-vulnerability, license-policy, and synthetic-artifact SLSA controls have produced the evidence in §§9.1–9.4. The effective integration ruleset was read back directly: enforcement `active`, target `refs/heads/integration`, no bypass actors (`current_user_can_bypass = never`), seven required status checks, strict up-to-date enforcement, and CodeQL `security_alerts_threshold = high_or_higher`; the CodeQL negative-control PR was API-observed as blocked. The R&D-only experimental-merge status becomes operational on `integration` only after the separate clean baseline-promotion PR merges with all seven checks successful. The final legal/repository-license disposition, dedicated Dependency Review, provenance for actual product/release artifacts, CAPA NC-ASIG-2026-10-17-PR10, Stage 3, runtime qualification, and AURA Protocol conformance remain open/not authorized. `main` protections remain unchanged.
