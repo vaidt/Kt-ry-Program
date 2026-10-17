@@ -1,0 +1,92 @@
+name: Gitleaks Isolated Negative Control
+
+on:
+  push:
+    branches:
+      - security/gitleaks-isolated-negative-control
+    paths:
+      - .github/workflows/gitleaks-isolated-negative-control.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-negative-control:
+    name: verify-negative-control
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout workflow source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          go version
+          go install github.com/gitleaks/gitleaks/v8@v8.30.1
+          "$(go env GOPATH)/bin/gitleaks" version
+
+      - name: Verify detection in an ephemeral repository
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tmp_repo="$(mktemp -d "$RUNNER_TEMP/gitleaks-negative-control.XXXXXX")"
+          report="$RUNNER_TEMP/gitleaks-negative-control-report.json"
+          trap 'rm -rf "$tmp_repo" "$report"' EXIT
+
+          git -C "$tmp_repo" init --quiet
+          git -C "$tmp_repo" config user.name "ASIG isolated test"
+          git -C "$tmp_repo" config user.email "asig-isolated-test@users.noreply.github.com"
+
+          # Construct the synthetic pattern at runtime: no complete key-shaped
+          # value is stored in this repository or its workflow source.
+          prefix="AKIA"
+          suffix="ABCDEFGHJKLMNPQR"
+          printf 'AWS_ACCESS_KEY_ID=%s%s\n' "$prefix" "$suffix" > "$tmp_repo/synthetic.env"
+          git -C "$tmp_repo" add synthetic.env
+          git -C "$tmp_repo" commit --quiet -m "isolated synthetic Gitleaks control"
+
+          gitleaks_bin="$(go env GOPATH)/bin/gitleaks"
+          set +e
+          "$gitleaks_bin" detect \
+            --source "$tmp_repo" \
+            --redact \
+            --verbose \
+            --exit-code 2 \
+            --report-format json \
+            --report-path "$report" \
+            --log-level info
+          scan_status=$?
+          set -e
+
+          if [[ "$scan_status" -ne 2 ]]; then
+            echo "::error::Expected Gitleaks to detect the synthetic control and exit 2; received $scan_status."
+            exit 1
+          fi
+
+          python - "$report" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as report_file:
+              findings = json.load(report_file)
+
+          matches = [
+              finding for finding in findings
+              if finding.get("RuleID") == "aws-access-token"
+              and str(finding.get("File", "")).endswith("synthetic.env")
+          ]
+          if len(matches) != 1:
+              raise SystemExit(
+                  "Expected exactly one aws-access-token finding in synthetic.env; "
+                  f"observed {len(matches)}."
+              )
+
+          # Emit only the rule and path; never print the detected value.
+          print("PASS: isolated synthetic control detected (aws-access-token, synthetic.env).")
+          PY
