@@ -58,6 +58,8 @@ class InventoryTests(unittest.TestCase):
             root.mkdir()
             init_repo(root)
             (root / "link.txt").symlink_to("sample.txt")
+            subprocess.run(["git", "-C", str(root), "add", "link.txt"], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-qm", "add symlink"], check=True)
             manifest = create_manifest(root, repository="test/repo")
             entry = next(item for item in manifest["inventory"]["files"] if item["path"] == "link.txt")
             self.assertEqual(entry["kind"], "symlink")
