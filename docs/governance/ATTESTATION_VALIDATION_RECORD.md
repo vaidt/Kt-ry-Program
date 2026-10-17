@@ -51,15 +51,14 @@ gh version
 # gh version 2.102.0 (2026-09-30)
 
 gh attestation verify asig-slsa-validation.tar.gz \
-  --repo vaid t/Kt-ry-Program \
-  --signer-workflow vaid t/Kt-ry-Program/.github/workflows/attestation-validation.yml \
+  --repo vaidt/Kt-ry-Program \
+  --signer-workflow vaidt/Kt-ry-Program/.github/workflows/attestation-validation.yml \
   --source-digest b2e7f1b72a80b0140649c0236eabbc051e925ab5 \
   --source-ref refs/heads/validation/attestation-negative-control \
   --predicate-type https://slsa.dev/provenance/v1 \
   --format json
 ```
 
-The invocation used the repository and workflow identifiers shown below. For clarity, the exact argument tokens executed by the workflow were `vaidt/Kt-ry-Program` and `vaidt/Kt-ry-Program/.github/workflows/attestation-validation.yml` (without the display-only line wrap above).
 
 ### Raw verification result
 
