@@ -26,17 +26,32 @@ The state may transition to `S3-DESIGN AUTHORIZED` only after this act has been 
 
 ## 2. Authority and governing basis
 
-**Proposed competent authority:** Protocol Custodian / Chief Architect, subject to the authority and scope recorded in the current AURA governance records.
+**Competent authority for this act:** `NOT ESTABLISHED — G1 BLOCKED`.
 
-**Current governance references:**
+The repository's record-of-reference index and M1 closure record claim a current authority binding and proven authority continuity. Those status declarations are material evidence to inspect, but they are not independently conclusive while the source-level findings below remain unreconciled.
+
+**Current governance references (read-only; not independently conclusive for G1):**
 - [Governance Status Index](https://github.com/vaidt/aura-specification/blob/main/GOVERNANCE_STATUS_INDEX.md)
 - [AURA M1 Closure Record v1.0](https://github.com/vaidt/aura-specification/blob/main/AURA_M1_CLOSURE_RECORD_v1.0.md)
 - [Authority Binding Record v1.1](https://github.com/vaidt/aura-specification/blob/main/AUTHORITY_BINDING_RECORD_v1.1.md)
 - [Wave 1 Implementation Authorization v1.2](https://github.com/vaidt/aura-specification/blob/main/AURA_IMPLEMENTATION_AUTHORIZATION_WAVE1_v1.2.md)
+- [Article XIII Authorship and Intent Source Review v0.1](https://github.com/vaidt/aura-specification/blob/main/governance/evidence/AURA_ARTICLE_XIII_AUTHORSHIP_AND_INTENT_RECORD_v0.1.md)
+- [Founding Instrument and Authority Evidence Procedure v0.1-DRAFT](https://github.com/vaidt/aura-specification/blob/main/governance/AURA-AFI-AEP-001_FOUNDING_INSTRUMENT_AND_AUTHORITY_EVIDENCE_PROCEDURE_v0.1-DRAFT.md)
 
-The current status index identifies the M1 closure, authority binding, and Wave 1 authorization as records of reference. The Wave 1 authorization is limited to the repository and paths expressly listed in that act; it does not itself authorize changes in runtime implementation repositories.
+**G1 evidence disposition:** `NOT PROVEN / BLOCKED`.
 
-Before this proposed act can become effective, the ratification record MUST identify:
+The Article XIII source-review record states that procedural effect was not established from the reviewed sources. It reports that the inspected Article XIII insertion did not evidence the amendment steps required by Constitution Article XI; standards-compliant verification of the Genesis declaration's detached SSHSIG envelope was not established due to an anomalous inner algorithm identifier; and the authority-binding record did not independently establish real-world identity or a prior competent source granting constitutional authority. The AFI procedure is itself a non-constitutive, unratified draft, so it does not decide the matter; its existence and conclusions do, however, document an unresolved evidence gap that must be reconciled rather than silently overridden by the M1 closure status.
+
+The Wave 1 authorization is expressly limited to `vaidt/aura-specification`, its named baseline, and its listed paths. It does not authorize changes in runtime implementation repositories and does not establish competence for this separate Stage 3 act.
+
+Before G1 can pass, the evidence package must establish and independently verify:
+1. a competent primary source for the authority asserted;
+2. the procedurally effective amendment, appointment, or succession chain from source to current holder;
+3. the current holder's identity, scope, effective date, and continuing validity for this exact act;
+4. standards-compliant verification of any cryptographic signature relied upon, including resolution of the reported SSHSIG envelope anomaly;
+5. reconciliation of the source-level findings with the M1 closure and authority-binding claims, with a reasoned disposition.
+
+Only after G1 is established may a competent human issuer ratify this exact act through the applicable mechanism. The ratification record must identify:
 1. the competent issuer and the capacity in which the issuer acts;
 2. evidence that the issuer's authority is current and covers this act;
 3. the applicable ratification mechanism;
@@ -44,7 +59,7 @@ Before this proposed act can become effective, the ratification record MUST iden
 5. the required valid signature and registration evidence;
 6. the effective date and any conditions or expiry.
 
-A historical role designation, a local signature file, or this draft's presence in GitHub is not, by itself, evidence that this act has been ratified.
+A historical role designation, a local signature file, a GitHub status label, or this draft's presence in GitHub is not, by itself, evidence that this act has been ratified.
 
 ## 3. Frozen source baseline — G0 evidence
 
@@ -138,7 +153,7 @@ Until every condition is satisfied, the effective state remains **`NOT AUTHORIZE
 
 ## 9. Ratification and registration record — intentionally pending
 
-- Competent issuer: `PENDING RATIFICATION`
+- G1 authority / decision competence: `NOT PROVEN / BLOCKED`
 - Authority evidence reference for this act: `PENDING`
 - Ratified artifact revision / digest: `PENDING`
 - Ratification decision reference: `PENDING`
@@ -147,7 +162,7 @@ Until every condition is satisfied, the effective state remains **`NOT AUTHORIZE
 - Effective date: `PENDING`
 - Independent verification result: `PENDING`
 
-**Current determination:** `PROPOSED · PENDING RATIFICATION BY PROTOCOL CUSTODIAN`  
+**Current determination:** `PROPOSED · G1 BLOCKED — AUTHORITY NOT PROVEN; RATIFICATION NOT YET ELIGIBLE`  
 **Effective authorization:** `NONE`  
 **Implementation authorization:** `NOT GRANTED`  
 **Release / conformance authorization:** `NOT GRANTED`
