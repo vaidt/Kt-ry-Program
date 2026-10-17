@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "AURA Source Identity Gate: source inventory, integrity verification, and evidence qualification."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Proprietary — no license granted pending project decision" }
 authors = [{ name = "AURA Project" }]
 dependencies = []
 
@@ -17,6 +16,3 @@ aura-source-identity = "aura_source_identity.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.unittest]
-start-directory = "tests"
