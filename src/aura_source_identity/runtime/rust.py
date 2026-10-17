@@ -65,8 +65,10 @@ def run_rust(
     else:
         test_status = "UNKNOWN"
 
+    qualification_status = "FAIL" if command_result["exit_code"] != 0 else "BLOCKED"
     receipt: dict[str, Any] = {
         "schema_version": 1,
+        "qualification_status": qualification_status,
         "kind": "ASIG_RUST_CARGO_RECEIPT",
         "runtime": "rust-cargo",
         "run_id": uuid.uuid4().hex,
