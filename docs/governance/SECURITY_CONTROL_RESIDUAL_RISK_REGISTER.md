@@ -52,6 +52,19 @@ A repository ruleset was created and read back on 2026-10-17:
 - Active rules: deletion blocked; force pushes blocked; pull request required with zero required human approvals for the solo-developer R&D workflow; conversation resolution required; strict required status checks for `test-and-build (3.11)`, `test-and-build (3.12)`, `test-and-build (3.13)`, `runtime-adapter-integration`, `codeql`, `secret-scan`, and `python-dependency-audit`. All seven check contexts are bound to GitHub Actions app ID `15368`.
 - The `integration` branch has **not** been created. The ruleset currently protects the future matching ref only; the CodeQL severity-threshold rule remains outstanding as described above.
 
+
+## RISK-ASIG-LIC-001 — Validation-only license gate is not the final licensing decision
+
+| Field | Decision |
+|---|---|
+| Risk statement | The repository's own licensing terms remain undecided. A technical scanner and a test blocked-license list must not be represented as legal approval, a final dependency-policy decision, or a substitute for review of `UPSTREAM_AND_LICENSE.md`. |
+| Validation evidence | [License-policy validation record](LICENSE_POLICY_VALIDATION_RECORD.md); isolated [PR #17](https://github.com/vaidt/Kt-ry-Program/pull/17), final head `11564648914309b95f7d30d5340ba90be496816f`; [ASIG CI run 39050856515](https://github.com/vaidt/Kt-ry-Program/actions/runs/39050856515) SUCCESS; [ASIG Security Controls run 39050856436](https://github.com/vaidt/Kt-ry-Program/actions/runs/39050856436) failed as expected at required `python-dependency-audit`, with explicit `LICENSE_POLICY_BANNED` output for synthetic GPLv3 metadata. PR API reported `mergeable_state = blocked`; PR closed without merge, source ref deleted and verified absent. |
+| Test-only control | `pip-licenses==5.5.5`, machine-readable `.github/license-policy.json`, and `scripts/check_license_policy.py`. GPL-2.0/GPL-3.0/AGPL-3.0 families are blocked in validation only; LGPL/MPL, missing metadata, and unknown/unrecognized labels fail closed for manual review. The current policy excludes `aura-source-identity-gate` from scanner inventory so the undecided repository license does not self-trigger the test gate. |
+| Residual limitation | This test covers one synthetic GPLv3 label and the required status blocking behavior. It does not prove comprehensive license-expression normalization, source-file scanning for license texts, runtime/deployment license obligations, or a legal determination. The blocklist requires separate final review before any production use. |
+| Status | NEGATIVE-CONTROL TECHNICAL TEST PASS; FINAL LICENSE POLICY / LEGAL DISPOSITION OPEN; VALIDATION ONLY. |
+| Prohibited use | Do not claim repository licensing has been settled, do not change `UPSTREAM_AND_LICENSE.md` on this basis, and do not activate experimental merges or Stage 3. |
+| Review / expiry | Reassess before any promotion request to `main` or proposal to activate experimental merges; include legal/licensing review by the responsible authority. |
+
 ## Activation constraints
 
 This register alone does not satisfy the policy activation checklist. Before `integration` becomes available for experimental merges:
@@ -62,5 +75,5 @@ This register alone does not satisfy the policy activation checklist. Before `in
 - positive/negative control tests and the remaining activation requirements in `SOLO_DEV_DUAL_TRACK_POLICY.md` must be evidenced;
 - `main` branch protection and `enforce_admins = true` must remain unchanged and be independently read back.
 
-**End of register.** The Dependency Review exception is bounded to non-authoritative R&D. The separate CodeQL alert-enforcement gap is open and blocks experimental merges.
+**End of register.** The Dependency Review exception is bounded to non-authoritative R&D. The license negative-control technically passed, but final license-policy/legal disposition and applicable artifact-attestation verification remain open. The separate CodeQL alert-enforcement gap described above and the remaining activation controls continue to block experimental merges.
 
