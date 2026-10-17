@@ -179,3 +179,22 @@ Accordingly, this addendum does **not** establish that RI-PY or RI-RS runtime te
 
 **Disposition:** PASS for the artifact integrity/provenance and read-only source-inventory scope of run `39038179646` and these exact pinned snapshots. Runtime qualification and release-gate adoption remain **BLOCKED** pending their separate authorization and reviewed test/toolchain bindings. Each later run or changed target pin requires its own evidence review.
 
+---
+
+## CAPA follow-up — deviation and reproducible verification evidence
+
+On 2026-10-17, PR #10 was merged with no submitted GitHub review recorded. The deviation is registered as `NC-ASIG-2026-10-17-PR10` in [`docs/COMPLIANCE_DEVIATIONS.md`](COMPLIANCE_DEVIATIONS.md). This finding is not waived by CI success.
+
+The complete five-entry artifact checksum list is preserved in [`docs/evidence/ASIG_RUN_39038179646_SHA256SUMS.txt`](evidence/ASIG_RUN_39038179646_SHA256SUMS.txt). Timestamped output excerpts returned by the original GitHub Actions job—including the original SHA256 verification output and `gh attestation verify` command/result—are preserved in [`docs/evidence/ASIG_RUN_39038179646_SIGSTORE_CHECKSUM_RAW.log`](evidence/ASIG_RUN_39038179646_SIGSTORE_CHECKSUM_RAW.log).
+
+| Evidence object | SHA-256 |
+|---|---|
+| GitHub Actions artifact ZIP, ID `12102634225` | `da72aba23558e5f6abbf0716ade226e926bfab9894fa1c845fb0bcbe3bf58391` |
+| Signed archive `asig-reference-source-inventory.tar.gz` | `db566b3f576826f01e230fe0a2a8a28ebbc618a1fbcac99050efb14ac840fde4` |
+| Sigstore bundle `attestation.json` | `d77633636c7bea3564867d24a3b8953d71eedac70e54a3521eed6bb9153967b4` |
+| Attestation verification JSON | `149a13e2ea61906b7572e5bc82243dc1460742b7ebcfedf9258497a9313027f9` |
+
+The source workflow run and original evidence artifact remain linked from the raw-log record. The verification excerpt records the command used, signer workflow identity and the workflow's PASS summary. These are source-inventory integrity/provenance claims only; they do not establish runtime test execution, runtime identity, protocol conformance, or release authorization.
+
+**CAPA status:** OPEN pending an independent approving review and successful required checks on the remediation PR. This addendum is documentary evidence, not a retroactive approval of PR #10.
+
