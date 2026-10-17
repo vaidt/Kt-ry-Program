@@ -78,7 +78,7 @@ def run_rust(
         "runtime": "rust-cargo",
         "run_id": uuid.uuid4().hex,
         "source_snapshot": source_snapshot,
-        "command": command_result,
+        "command": command_receipt,
         "build_context": {
             "status": "CAPTURED" if versions["cargo"]["exit_code"] == 0 and versions["rustc"]["exit_code"] == 0 else "UNKNOWN",
             "versions": versions,
