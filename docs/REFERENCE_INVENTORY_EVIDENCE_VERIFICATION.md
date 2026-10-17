@@ -76,3 +76,106 @@ The result establishes integrity and provenance for the captured source-inventor
 The receipts and context explicitly record `runtime_tests_executed = false`, `runtime_identity_observed = false`, `protocol_conformance_claimed = false`, `runtime_qualification_status = BLOCKED`, and `release_gate_authorized = false`.
 
 **Disposition:** source-inventory evidence is PASS for this run and these exact pinned snapshots. RI-PY/RI-RS runtime qualification and release-gate adoption remain BLOCKED pending their separate authorization and reviewed test/toolchain bindings. A later run or changed target pin requires a new evidence review.
+
+---
+
+## Post-merge verification addendum — run 39038179646
+
+**Review date:** 2026-10-17  
+**Disposition:** **PASS — source inventory integrity and provenance only.**  
+**Runtime qualification:** **BLOCKED.** **Protocol conformance:** **NOT CLAIMED.** **Release gate:** **NOT AUTHORIZED.**
+
+### Run and artifact binding
+
+| Field | Verified value |
+|---|---|
+| Repository | `vaidt/Kt-ry-Program` (repository ID `1423292837`) |
+| Workflow | `.github/workflows/read-only-reference-source-inventory.yml` |
+| Workflow run | [39038179646](https://github.com/vaidt/Kt-ry-Program/actions/runs/39038179646) |
+| Run conclusion | `success` |
+| ASIG commit / workflow commit | `0c50927f85bbee62cee84d0f099d1a220351daf0` |
+| Ref | `refs/heads/main` |
+| Artifact | [asig-reference-source-inventory-39038179646](https://github.com/vaidt/Kt-ry-Program/actions/runs/39038179646/artifacts/12102634225) |
+| Artifact ID | `12102634225` |
+| Artifact size | `61,105 bytes` |
+| Downloaded GitHub Actions artifact ZIP SHA-256 | `da72aba23558e5f6abbf0716ade226e926bfab9894fa1c845fb0bcbe3bf58391` |
+| Signed archive SHA-256 | `db566b3f576826f01e230fe0a2a8a28ebbc618a1fbcac99050efb14ac840fde4` |
+| Sigstore bundle SHA-256 | `d77633636c7bea3564867d24a3b8953d71eedac70e54a3521eed6bb9153967b4` |
+
+The independently downloaded artifact ZIP digest matches the GitHub artifact metadata for artifact ID `12102634225`.
+
+### CI result for the merged commit
+
+All five post-merge checks associated with commit `0c50927f85bbee62cee84d0f099d1a220351daf0` completed with conclusion `success` in [workflow run 39038179621](https://github.com/vaidt/Kt-ry-Program/actions/runs/39038179621):
+
+- `test-and-build (3.11)`
+- `test-and-build (3.12)`
+- `test-and-build (3.13)`
+- `runtime-adapter-integration`
+- `inventory-reference-sources`
+
+These CI results establish successful completion of those workflows only; they do not expand the source-inventory evidence scope stated below.
+
+### Independent checksum and self-digest verification
+
+| Check | Result | Recorded digest / evidence |
+|---|---|---|
+| Artifact ZIP SHA-256 versus GitHub metadata | **PASS** | `da72aba23558e5f6abbf0716ade226e926bfab9894fa1c845fb0bcbe3bf58391` |
+| Entries listed in `asig-reference-inventory-SHA256SUMS.txt` | **5/5 PASS** | All five listed file digests matched the extracted files |
+| RI-PY manifest canonical JSON self-digest | **PASS** | `bb5ba2d2723d65021f82e18fbc3311ee67808930553f5acce510d1a28f81ffb8` |
+| RI-RS manifest canonical JSON self-digest | **PASS** | `03fc5c6cb43a79dca338f7a3b67c75054c0cd5812a21e67d5fab03659bc84955` |
+| RI-PY receipt canonical JSON self-digest | **PASS** | `fdd33a3353a0fd76f86f418b66eea2892ccfdc033d656b99eeceaf6574c9f65e` |
+| RI-RS receipt canonical JSON self-digest | **PASS** | `40a807d07e74274866cd51194357d0d2850b7a9923326cfa13705e6e3cfeb1de` |
+
+### Frozen source targets
+
+| Field | RI-PY | RI-RS |
+|---|---|---|
+| Repository | `vaidt/aura-poc-a-core-v3.3` | `vaidt/aura-guard-v1.3` |
+| Repository ID | `1414456591` | `1378273687` |
+| Pinned commit | `1d15ecbed8470476684951e9ff301a3cfc26a46d` | `e0ed7a8b381b725fe65bd86716894bfdf17d3a94` |
+| Pinned Git tree | `2ada7e80083defab47cea18a2bd81d228685a9e0` | `67e2fc417cf6e2ecf0110e8684db2522d8149071` |
+| Inventory entry count | 194 | 136 |
+| Source identity disposition | `EXACT_MATCH` | `EXACT_MATCH` |
+
+The recomputed manifest and receipt self-digests matched their recorded digest fields. The independently checked inventory records bind these exact pinned repository commits and tree identifiers; they are not assertions about subsequent repository states.
+
+### Sigstore identity verification and provenance
+
+Independent Sigstore CLI identity verification of the signed archive against the bundle completed with **exit code 0** using this workflow certificate identity and OIDC issuer:
+
+```text
+certificate identity:
+https://github.com/vaidt/Kt-ry-Program/.github/workflows/read-only-reference-source-inventory.yml@refs/heads/main
+
+OIDC issuer:
+https://token.actions.githubusercontent.com
+
+signed archive:
+asig-reference-source-inventory.tar.gz
+
+signed archive SHA-256:
+db566b3f576826f01e230fe0a2a8a28ebbc618a1fbcac99050efb14ac840fde4
+
+verification result:
+PASS (exit code 0)
+```
+
+The verified statement binds the archive digest to repository ID `1423292837`, workflow path `.github/workflows/read-only-reference-source-inventory.yml`, workflow ref `refs/heads/main`, workflow commit `0c50927f85bbee62cee84d0f099d1a220351daf0`, and run invocation `39038179646`. The verified transparency timestamp was `2026-10-17T13:50:11Z`.
+
+The bundle records Rekor global log index `3295739294`, shard-local inclusion-proof index `3173835032`, and proof tree size `3173835185`. Global and shard-local index values are distinct index domains; their inequality alone is not a verification failure. The Sigstore verifier accepted the bundle and expected identity.
+
+### Scope and explicit non-claims
+
+This record is limited to **read-only source inventory, evidence-file integrity, and provenance for the two pinned source snapshots**. The captured context explicitly states:
+
+- `audit_scope = READ_ONLY_SOURCE_INVENTORY_ONLY`
+- `runtime_tests_executed = false`
+- `runtime_identity_observed = false`
+- `protocol_conformance_claimed = false`
+- `release_gate_authorized = false`
+
+Accordingly, this addendum does **not** establish that RI-PY or RI-RS runtime tests were executed, that runtime or machine-code identity was observed, that protocol conformance has been demonstrated, that a normative or governance decision has been closed, or that a release gate is authorized. It does not authorize changes to either target repository.
+
+**Disposition:** PASS for the artifact integrity/provenance and read-only source-inventory scope of run `39038179646` and these exact pinned snapshots. Runtime qualification and release-gate adoption remain **BLOCKED** pending their separate authorization and reviewed test/toolchain bindings. Each later run or changed target pin requires its own evidence review.
+
