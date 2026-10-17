@@ -154,6 +154,7 @@ Until every condition is satisfied, the effective state remains **`NOT AUTHORIZE
 ## 9. Ratification and registration record — intentionally pending
 
 - G1 authority / decision competence: `NOT PROVEN / BLOCKED`
+- Competent issuer: `PENDING — NOT TO BE NAMED UNTIL G1 PASSES`
 - Authority evidence reference for this act: `PENDING`
 - Ratified artifact revision / digest: `PENDING`
 - Ratification decision reference: `PENDING`
