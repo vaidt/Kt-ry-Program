@@ -48,9 +48,9 @@ def run_python(
     bootstrap_dir = output_path.with_name(output_path.stem + "-bootstrap")
     bootstrap_dir.mkdir(parents=True, exist_ok=True)
     (bootstrap_dir / "sitecustomize.py").write_text(
-        "import os\\n"
-        "if os.environ.get('ASIG_RUNTIME_OBSERVER') == 'python':\\n"
-        "    from aura_source_identity.runtime import python_observer  # noqa: F401\\n",
+        "import os\n"
+        "if os.environ.get('ASIG_RUNTIME_OBSERVER') == 'python':\n"
+        "    from aura_source_identity.runtime import python_observer  # noqa: F401\n",
         encoding="utf-8",
     )
     runtime_log.unlink(missing_ok=True)
