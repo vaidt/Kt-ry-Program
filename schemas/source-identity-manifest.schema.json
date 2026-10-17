@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vaidt/Kt-ry-Program/schemas/source-identity-manifest.schema.json",
+  "title": "ASIG Source Identity Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "repository", "git", "inventory", "scope", "hash_contract", "manifest_sha256"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "AURA_SOURCE_IDENTITY_MANIFEST" },
+    "repository": { "type": ["string", "null"] },
+    "git": {
+      "type": "object",
+      "required": ["commit_sha", "tree_sha", "working_tree_clean"],
+      "properties": {
+        "commit_sha": { "type": ["string", "null"] },
+        "tree_sha": { "type": ["string", "null"] },
+        "working_tree_clean": { "type": ["boolean", "null"] }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "required": ["file_count", "files", "source_tree_sha256"],
+      "properties": {
+        "file_count": { "type": "integer", "minimum": 0 },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "kind", "sha256", "size"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "kind": { "enum": ["file", "symlink"] },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              "size": { "type": "integer", "minimum": 0 },
+              "target": { "type": "string" }
+            }
+          }
+        },
+        "source_tree_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": ["excluded_names", "excluded_paths", "symlinks"],
+      "properties": {
+        "excluded_names": { "type": "array", "items": { "type": "string" } },
+        "excluded_paths": { "type": "array", "items": { "type": "string" } },
+        "symlinks": { "type": "string" }
+      }
+    },
+    "hash_contract": { "type": "string" },
+    "manifest_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}
