@@ -124,11 +124,22 @@ def main() -> int:
             continue
         name = str(package.get("Name") or package.get("name") or "<unknown-package>")
         version = str(package.get("Version") or package.get("version") or "<unknown-version>")
-        raw_license = package.get("License", package.get("license"))
-        tokens = license_tokens(raw_license)
+        # pip-licenses 5.5.x may expose license expression metadata separately
+        # from classifier/legacy license fields. Collect every license-bearing
+        # field rather than assuming a single JSON key.
+        tokens: list[str] = []
+        license_fields: list[str] = []
+        for key, value in package.items():
+            key_norm = str(key).casefold()
+            if "license" not in key_norm or "file" in key_norm:
+                continue
+            license_fields.append(str(key))
+            tokens.extend(license_tokens(value))
+        tokens = list(dict.fromkeys(tokens))
         if not tokens:
             blocked.append(
-                f"LICENSE_POLICY_REVIEW_REQUIRED: {name} {version}: missing license metadata"
+                f"LICENSE_POLICY_REVIEW_REQUIRED: {name} {version}: missing license metadata "
+                f"(license-bearing report fields={license_fields!r})"
             )
             continue
         for token in tokens:
