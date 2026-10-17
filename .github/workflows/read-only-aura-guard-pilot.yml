@@ -70,6 +70,11 @@ jobs:
           assert receipt["target"]["repository"] == "vaidt/Aura-Guard"
           assert receipt["protocol_conformance_claimed"] is False
           assert receipt["runtime_tests_executed"] is False
+          from aura_source_identity.canonical import object_sha256
+          body = dict(receipt)
+          claimed = body.pop("receipt_sha256")
+          assert object_sha256(body) == claimed, "receipt self-digest mismatch"
+          assert len(receipt["source_inventory"]["manifest_sha256"]) == 64
           print("ASIG read-only source inventory PASS")
           print("target commit:", receipt["target"]["commit_sha"])
           print("manifest sha256:", receipt["source_inventory"]["manifest_sha256"])
@@ -85,6 +90,7 @@ jobs:
           predicate-path: ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
 
       - name: Upload source manifest, receipt, checksums, and attestation bundle
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: asig-aura-guard-read-only-audit-${{ github.run_id }}
@@ -93,5 +99,5 @@ jobs:
             ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
             ${{ runner.temp }}/asig-aura-guard-checksums.txt
             ${{ steps.attest.outputs.bundle-path }}
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 90
