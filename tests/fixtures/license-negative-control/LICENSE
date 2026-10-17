@@ -1,0 +1,3 @@
+SYNTHETIC TEST FIXTURE — NOT FOR DISTRIBUTION
+
+The package metadata for this test-only fixture intentionally declares GPL-3.0-only to validate that the ASIG license-policy gate blocks a prohibited license. This file is a test marker, not the text of a legal license grant. It must not be distributed or merged into integration or main.
