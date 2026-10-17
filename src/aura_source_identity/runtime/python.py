@@ -45,6 +45,14 @@ def run_python(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_log = output_path.with_suffix(".runtime.jsonl")
     test_log = output_path.with_suffix(".tests.jsonl")
+    bootstrap_dir = output_path.with_name(output_path.stem + "-bootstrap")
+    bootstrap_dir.mkdir(parents=True, exist_ok=True)
+    (bootstrap_dir / "sitecustomize.py").write_text(
+        "import os\\n"
+        "if os.environ.get('ASIG_RUNTIME_OBSERVER') == 'python':\\n"
+        "    from aura_source_identity.runtime import python_observer  # noqa: F401\\n",
+        encoding="utf-8",
+    )
     runtime_log.unlink(missing_ok=True)
     test_log.unlink(missing_ok=True)
 
@@ -68,11 +76,18 @@ def run_python(
     env["ASIG_RUN_ID"] = uuid.uuid4().hex
     env["ASIG_EXPECTED_MODULES"] = json.dumps(expected, sort_keys=True)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
-    env["PYTHONPATH"] = os.pathsep.join([asig_src, env.get("PYTHONPATH", "")]).rstrip(os.pathsep)
+    env["PYTHONPATH"] = os.pathsep.join([str(bootstrap_dir), asig_src, env.get("PYTHONPATH", "")]).rstrip(os.pathsep)
     if is_pytest:
         env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
 
-    command_result = run_process(command, root, env, timeout_seconds)
+    try:
+        command_result = run_process(command, root, env, timeout_seconds)
+    finally:
+        (bootstrap_dir / "sitecustomize.py").unlink(missing_ok=True)
+        try:
+            bootstrap_dir.rmdir()
+        except OSError:
+            pass
     module_records = [row for row in read_jsonl(runtime_log) if row.get("event") in {"module", "module_unobservable"}]
     process_records = [row for row in read_jsonl(runtime_log) if row.get("event") in {"process_start", "process_end", "observer_error", "observer_bootstrap_error"}]
     test_records = [row for row in read_jsonl(test_log) if row.get("event") == "test_result"]
