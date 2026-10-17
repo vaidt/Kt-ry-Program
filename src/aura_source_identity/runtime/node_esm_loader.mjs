@@ -41,7 +41,7 @@ export async function load(url, context, nextLoad) {
     if (!url.startsWith("file:")) throw new Error("mapped ESM module did not resolve to a file URL");
     if (loaded.source == null) throw new Error("loader did not expose module source bytes");
     const loadedPath = fileURLToPath(url);
-    const loadedSource = Buffer.isBuffer(loaded.source) ? loaded.source : Buffer.from(String(loaded.source), "utf8");
+    const loadedSource = typeof loaded.source === "string" ? Buffer.from(loaded.source, "utf8") : Buffer.from(loaded.source);
     const stableSource = readStable(loadedPath);
     if (sha(stableSource) !== sha(loadedSource)) throw new Error("loader source differs from stable filesystem bytes");
     const expectedSource = readStable(record.expectedPath);
