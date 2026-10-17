@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from ..canonical import object_sha256
-from .common import run_process, sha256_file, write_json
+from .common import combine_snapshot_checks, run_process, sha256_file, verify_manifest_binding, write_json
 
 
 def _version(argv: list[str], cwd: Path, env: dict[str, str]) -> dict[str, Any]:
@@ -29,6 +29,7 @@ def run_rust(
     required_test_ids: list[str] | None = None,
     timeout_seconds: float = 600,
     output_path: Path | None = None,
+    manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve(strict=True)
     if output_path is None:
@@ -38,7 +39,10 @@ def run_rust(
         raise ValueError("receipt must be outside the measured repository")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
+    snapshot_before = verify_manifest_binding(root, manifest_path)
     command_result = run_process(list(argv), root, env, timeout_seconds)
+    snapshot_after = verify_manifest_binding(root, manifest_path)
+    source_snapshot = combine_snapshot_checks(snapshot_before, snapshot_after)
 
     fingerprints: dict[str, Any] = {}
     for name in ("Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "rust-toolchain"):
@@ -65,13 +69,14 @@ def run_rust(
     else:
         test_status = "UNKNOWN"
 
-    qualification_status = "FAIL" if command_result["exit_code"] != 0 else "BLOCKED"
+    qualification_status = "FAIL" if command_result["exit_code"] != 0 or source_snapshot["status"] == "MISMATCH" else "BLOCKED"
     receipt: dict[str, Any] = {
         "schema_version": 1,
         "qualification_status": qualification_status,
         "kind": "ASIG_RUST_CARGO_RECEIPT",
         "runtime": "rust-cargo",
         "run_id": uuid.uuid4().hex,
+        "source_snapshot": source_snapshot,
         "command": command_result,
         "build_context": {
             "status": "CAPTURED" if versions["cargo"]["exit_code"] == 0 and versions["rustc"]["exit_code"] == 0 else "UNKNOWN",
