@@ -1,0 +1,289 @@
+name: ASIG SLSA Attestation Validation
+
+on:
+  push:
+    branches:
+      - "validation/attestation-negative-control"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-attest:
+    name: build-and-attest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      EXPECTED_REPOSITORY: "vaidt/Kt-ry-Program"
+      EXPECTED_REPOSITORY_ID: "1423292837"
+    steps:
+      - name: Checkout exact source without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Enforce validation branch and source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "$EXPECTED_REPOSITORY"
+          test "$GITHUB_REF" = "refs/heads/validation/attestation-negative-control"
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "VALIDATION_SCOPE=PASS"
+          echo "SOURCE_REPOSITORY=$GITHUB_REPOSITORY"
+          echo "SOURCE_REF=$GITHUB_REF"
+          echo "SOURCE_COMMIT=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse "${GITHUB_SHA}^{tree}")"
+          echo "WORKFLOW_REF=$GITHUB_WORKFLOW_REF"
+          echo "WORKFLOW_SHA=$GITHUB_WORKFLOW_SHA"
+
+      - name: Build deterministic synthetic provenance fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build dist evidence
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import subprocess
+          from datetime import datetime, timezone
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          metadata = {
+              "schema_version": 1,
+              "kind": "ASIG_SLSA_VALIDATION_FIXTURE",
+              "validation_only": True,
+              "not_for_distribution": True,
+              "repository": os.environ["GITHUB_REPOSITORY"],
+              "repository_id": os.environ["EXPECTED_REPOSITORY_ID"],
+              "source_ref": os.environ["GITHUB_REF"],
+              "source_commit_sha": os.environ["GITHUB_SHA"],
+              "source_tree_sha": git("rev-parse", f"{os.environ['GITHUB_SHA']}^{{tree}}"),
+              "workflow_ref": os.environ["GITHUB_WORKFLOW_REF"],
+              "workflow_sha": os.environ["GITHUB_WORKFLOW_SHA"],
+              "workflow_path": ".github/workflows/attestation-validation.yml",
+              "workflow_blob_sha": git("hash-object", ".github/workflows/attestation-validation.yml"),
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "run_number": os.environ["GITHUB_RUN_NUMBER"],
+              "event_name": os.environ["GITHUB_EVENT_NAME"],
+              "created_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            }
+          pathlib.Path("build/attestation-metadata.json").write_text(
+              json.dumps(metadata, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(metadata, sort_keys=True, indent=2))
+          PY
+          python -m json.tool build/attestation-metadata.json >/dev/null
+          (
+            cd build
+            tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner -cf - attestation-metadata.json \
+              | gzip -n > ../dist/asig-slsa-validation.tar.gz
+          )
+          sha256sum dist/asig-slsa-validation.tar.gz | tee dist/SHA256SUMS
+          test -s dist/asig-slsa-validation.tar.gz
+
+      - name: Generate SLSA build provenance attestation
+        id: attest
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f
+        with:
+          subject-path: dist/asig-slsa-validation.tar.gz
+
+      - name: Prepare immutable evidence package
+        shell: bash
+        env:
+          ATTESTATION_BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          test -s "$ATTESTATION_BUNDLE"
+          cp dist/asig-slsa-validation.tar.gz evidence/asig-slsa-validation.tar.gz
+          cp "$ATTESTATION_BUNDLE" evidence/sigstore-provenance.bundle.json
+          (
+            cd evidence
+            sha256sum asig-slsa-validation.tar.gz sigstore-provenance.bundle.json > SHA256SUMS
+            sha256sum -c SHA256SUMS
+          )
+          echo "ATTESTATION_BUNDLE_PRESENT=PASS"
+          echo "SUBJECT_SHA256=$(sha256sum evidence/asig-slsa-validation.tar.gz | cut -d' ' -f1)"
+          echo "EVIDENCE_BUNDLE_SHA256=$(sha256sum evidence/sigstore-provenance.bundle.json | cut -d' ' -f1)"
+
+      - name: Upload test artifact and attestation bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: asig-slsa-validation-${{ github.run_id }}
+          path: |
+            evidence/asig-slsa-validation.tar.gz
+            evidence/sigstore-provenance.bundle.json
+            evidence/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
+
+  verify-out-of-band:
+    name: verify-out-of-band
+    needs: build-and-attest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      attestations: read
+    env:
+      EXPECTED_REPOSITORY: "vaidt/Kt-ry-Program"
+      EXPECTED_REPOSITORY_ID: "1423292837"
+      EXPECTED_SIGNER_WORKFLOW: "vaidt/Kt-ry-Program/.github/workflows/attestation-validation.yml"
+      EXPECTED_PREDICATE: "https://slsa.dev/provenance/v1"
+    steps:
+      - name: Download the uploaded artifact into a separate runner
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: asig-slsa-validation-${{ github.run_id }}
+          path: verify
+
+      - name: Verify downloaded bytes against the preserved SHA-256 manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd verify
+          sha256sum -c SHA256SUMS
+          test "$GITHUB_REPOSITORY" = "$EXPECTED_REPOSITORY"
+          echo "DOWNLOAD_AND_SHA256_CHECK=PASS"
+          sha256sum asig-slsa-validation.tar.gz
+          echo "EXPECTED_SOURCE_REF=$GITHUB_REF"
+          echo "EXPECTED_SOURCE_COMMIT=$GITHUB_SHA"
+
+      - name: Run GitHub CLI cryptographic provenance verification
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd verify
+          gh --version | tee gh-version.txt
+          printf '%s\n' \
+            "gh attestation verify asig-slsa-validation.tar.gz" \
+            "  --repo $GITHUB_REPOSITORY" \
+            "  --signer-workflow $EXPECTED_SIGNER_WORKFLOW" \
+            "  --source-digest $GITHUB_SHA" \
+            "  --source-ref $GITHUB_REF" \
+            "  --predicate-type $EXPECTED_PREDICATE" \
+            "  --format json" | tee verification-command.txt
+          gh attestation verify asig-slsa-validation.tar.gz \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$EXPECTED_SIGNER_WORKFLOW" \
+            --source-digest "$GITHUB_SHA" \
+            --source-ref "$GITHUB_REF" \
+            --predicate-type "$EXPECTED_PREDICATE" \
+            --format json > verification.raw.json 2> verification.stderr.log
+          echo "GH_ATTESTATION_VERIFY_EXIT=0"
+          cat verification.raw.json
+
+      - name: Assert certificate identity, predicate, timestamp, and artifact digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd verify
+          python - <<'PY'
+          import hashlib
+          import json
+          import pathlib
+          import sys
+
+          artifact = pathlib.Path("asig-slsa-validation.tar.gz")
+          expected_sha256 = hashlib.sha256(artifact.read_bytes()).hexdigest()
+          results = json.loads(pathlib.Path("verification.raw.json").read_text(encoding="utf-8"))
+          if not isinstance(results, list) or not results:
+              raise SystemExit("FAIL: gh attestation verify returned no verified statements")
+
+          matching = []
+          for result in results:
+              verification = result.get("verificationResult", {})
+              certificate = verification.get("signature", {}).get("certificate", {})
+              statement = verification.get("statement", {})
+              if str(certificate.get("sourceRepositoryIdentifier", "")) != "1423292837":
+                  raise SystemExit(
+                      "FAIL: signer certificate repository ID mismatch: "
+                      + repr(certificate.get("sourceRepositoryIdentifier"))
+                  )
+              if not verification.get("verifiedTimestamps"):
+                  raise SystemExit("FAIL: no cryptographically verified timestamp")
+              if statement.get("predicateType") != "https://slsa.dev/provenance/v1":
+                  raise SystemExit("FAIL: unexpected provenance predicate type")
+              for subject in statement.get("subject", []):
+                  digest = subject.get("digest", {}).get("sha256")
+                  if digest == expected_sha256:
+                      matching.append((certificate, subject, verification))
+
+          if not matching:
+              raise SystemExit(
+                  "FAIL: no attested subject digest matches downloaded artifact SHA-256 "
+                  + expected_sha256
+              )
+
+          certificate, subject, verification = matching[0]
+          print("ATTESTATION_CRYPTOGRAPHIC_VERIFICATION=PASS")
+          print("SIGNER_REPOSITORY_ID=" + str(certificate.get("sourceRepositoryIdentifier")))
+          print("VERIFIED_TIMESTAMP_COUNT=" + str(len(verification["verifiedTimestamps"])))
+          print("PREDICATE_TYPE=https://slsa.dev/provenance/v1")
+          print("SUBJECT_NAME=" + str(subject.get("name")))
+          print("LOCAL_ARTIFACT_SHA256=" + expected_sha256)
+          print("ATTESTED_SUBJECT_SHA256=" + str(subject["digest"]["sha256"]))
+          print("SIGNER_WORKFLOW_CONSTRAINT=PASS (enforced by gh attestation verify --signer-workflow)")
+          print("SOURCE_COMMIT_CONSTRAINT=PASS (enforced by --source-digest)")
+          print("SOURCE_REF_CONSTRAINT=PASS (enforced by --source-ref)")
+          print("CERTIFICATE_FIELDS=" + json.dumps(certificate, sort_keys=True))
+          PY
+
+      - name: Tamper negative control — modified artifact must fail verification
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd verify
+          cp asig-slsa-validation.tar.gz tampered-asig-slsa-validation.tar.gz
+          printf 'tamper-probe\n' >> tampered-asig-slsa-validation.tar.gz
+          set +e
+          gh attestation verify tampered-asig-slsa-validation.tar.gz \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$EXPECTED_SIGNER_WORKFLOW" \
+            --source-digest "$GITHUB_SHA" \
+            --source-ref "$GITHUB_REF" \
+            --predicate-type "$EXPECTED_PREDICATE" \
+            --format json > tampered-verification.raw.json 2> tampered-verification.stderr.log
+          verify_status=$?
+          set -e
+          if [ "$verify_status" -eq 0 ]; then
+            echo "TAMPER_NEGATIVE_CONTROL=FAIL: modified bytes unexpectedly verified"
+            cat tampered-verification.raw.json
+            exit 1
+          fi
+          echo "TAMPER_NEGATIVE_CONTROL=PASS: modified bytes rejected by gh attestation verify (exit=$verify_status)"
+          cat tampered-verification.stderr.log
+
+      - name: Upload raw verification evidence and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: asig-slsa-verification-logs-${{ github.run_id }}
+          path: |
+            verify/asig-slsa-validation.tar.gz
+            verify/sigstore-provenance.bundle.json
+            verify/SHA256SUMS
+            verify/gh-version.txt
+            verify/verification-command.txt
+            verify/verification.raw.json
+            verify/verification.stderr.log
+            verify/tampered-asig-slsa-validation.tar.gz
+            verify/tampered-verification.raw.json
+            verify/tampered-verification.stderr.log
+          if-no-files-found: warn
+          retention-days: 7
