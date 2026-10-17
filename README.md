@@ -43,15 +43,15 @@ Qualify supplied test evidence:
 
 Python example; required pytest node IDs must come from the approved test plan:
 
-`aura-source-identity runtime-python --root . --module package.rules=package/rules.py --required-test-id public_tests/test_public.py::test_example --output ../asig-python-receipt.json -- python -m pytest -q public_tests`
+`aura-source-identity runtime-python --root . --manifest ../asig-manifest.json --module package.rules=package/rules.py --required-test-id public_tests/test_public.py::test_example --output ../asig-python-receipt.json -- python -m pytest -q public_tests`
 
 Node example; mappings are exact module specifier strings and expected paths:
 
-`aura-source-identity runtime-node --root . --specifier ./verification.js=frontend/src/lib/verification.js --output ../asig-node-receipt.json -- node run-a-test-command.js`
+`aura-source-identity runtime-node --root . --manifest ../asig-manifest.json --specifier ./verification.js=frontend/src/lib/verification.js --output ../asig-node-receipt.json -- node run-a-test-command.js`
 
 Rust example:
 
-`aura-source-identity runtime-rust --root . --required-test-id module::test_name --output ../asig-rust-receipt.json -- cargo test --locked`
+`aura-source-identity runtime-rust --root . --manifest ../asig-manifest.json --required-test-id module::test_name --output ../asig-rust-receipt.json -- cargo test --locked`
 
 **Status semantics:** Python can return `PASS` only when every configured module is observed as an exact path/content match and the observed pytest node IDs exactly match the required set with all tests passing. Node records source identity but currently leaves overall qualification `BLOCKED` because there is no runner-specific test-completeness adapter yet. Rust records build context only and deliberately leaves qualification `BLOCKED` on a passing command. A non-zero command or confirmed source mismatch is `FAIL`.
 
