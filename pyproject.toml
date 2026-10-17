@@ -9,7 +9,7 @@ description = "AURA Source Identity Gate: source inventory, integrity verificati
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "AURA Project" }]
-dependencies = ["pytest>=8", "urllib3==1.26.4"]
+dependencies = ["pytest>=8", "urllib3==1.26.15"]
 
 [project.scripts]
 aura-source-identity = "aura_source_identity.cli:main"
