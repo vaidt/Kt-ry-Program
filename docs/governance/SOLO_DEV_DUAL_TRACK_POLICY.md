@@ -209,7 +209,8 @@ The PR #11 exception record, if merged in accordance with its explicitly authori
 - [ ] CI triggers verified for pull requests and for any permitted push-based development workflow on the target ref.
 - [x] Required status-check names and provider captured and read back in ruleset ID `25306960`; check contexts are bound to GitHub Actions app ID `15368`.
 - [ ] SAST, dependency, secret, and applicable license scanners tested with positive and negative controls.
-- [ ] CodeQL severity-threshold enforcement configured as a `code_scanning` rule and read back for the `integration` ref. A successful `codeql` job alone does not prove that findings are below threshold.
+- [x] CodeQL severity-threshold rule configured and read back in ruleset `25306960`: `security_alerts_threshold = high_or_higher`, `alerts_threshold = none`, tool `CodeQL`.
+- [ ] End-to-end CodeQL merge-enforcement behavior validated after `integration` exists and CodeQL results are attached to that ref. Configuration read-back alone is not a behavior test; a successful `codeql` job alone does not prove that findings are below threshold.
 - [ ] Attestation verification identity, workflow, predicate, artifact digest, and retention rules documented and tested for the applicable R&D artifact flow.
 - [x] Future-ref ruleset read back: ruleset [25306960](https://github.com/vaidt/Kt-ry-Program/rules/25306960) targets only `refs/heads/integration`, has no bypass actors, blocks deletion and force pushes, requires pull requests and resolved conversations, and requires all seven CI/security status checks.
 - [x] `main` protection read back on 2026-10-17; `protected = true`, `enforce_admins = true`, one required approval, and its original four required checks remain unchanged.
@@ -233,9 +234,9 @@ Review the policy after a security incident, material change to repository workf
 | This policy | RATIFIED FOR INFRASTRUCTURE PREPARATION ONLY / INTEGRATION MERGES NOT AUTHORIZED |
 | `main` protection | Read back 2026-10-17 and unchanged: protected, admin enforcement true, one required approval, original four required CI contexts |
 | `integration` branch | NOT CREATED |
-| CI and security evidence checkpoint | `ASIG CI` run [39043353975](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043353975) and `ASIG Security Controls` run [39043353992](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043353992) succeeded on commit `5dae7b275277c92dc6f0173e6e74948256b4f370` |
-| CodeQL | Analysis successful; scanned 22/22 Python files, 5/5 workflow files and 2/2 JavaScript files; SARIF upload completed. Alert-threshold enforcement remains a separate open activation item |
-| Gitleaks | Push-diff scan found no leaks; additional redacted full-history scan inspected 132 commits / ~435.86 KB and found no leaks on the cited evidence checkpoint |
+| CI and security evidence checkpoint | `ASIG CI` run [39043855839](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043855839) and `ASIG Security Controls` run [39043855790](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043855790) succeeded on commit `7f5562747b264304a615ab8d1277bf15e49d32a8` |
+| CodeQL | Analysis successful; scanned 22/22 Python files, 5/5 workflow files and 2/2 JavaScript files; SARIF upload completed. Ruleset 25306960 now configures `security_alerts_threshold = high_or_higher`; behavior validation on the actual `integration` ref remains open |
+| Gitleaks | Push-diff scan found no leaks; redacted full-history scan on the cited evidence checkpoint scanned 132 commits / ~442.56 KB and found no leaks |
 | Python dependency audit | `pip-audit . --strict` returned `No known vulnerabilities found` on the cited evidence checkpoint |
 | Integration ruleset | Active, ID `25306960`, targeted only to `refs/heads/integration`; verified by read-back. No bypass actors. The branch itself remains absent |
 | Dedicated Dependency Review | Absent; temporary R&D-only residual risk in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md) |
@@ -245,4 +246,4 @@ Review the policy after a security incident, material change to repository workf
 
 ---
 
-**End of policy.** This document records limited authorization for infrastructure preparation. It is not evidence that any scanner or GitHub setting has been configured, and it does not authorize experimental merges on `integration`.
+**End of policy.** This document records limited authorization for infrastructure preparation and links to recorded configuration read-backs. Successful scan jobs and the ruleset read-back do not by themselves prove end-to-end merge blocking on a not-yet-created `integration` ref; experimental merges remain unauthorized until the remaining activation checklist is satisfied.
