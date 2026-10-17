@@ -86,6 +86,7 @@ def run_node(
         "FAIL" if identity_status == "MISMATCH" or command_result["exit_code"] != 0 or source_snapshot["status"] == "MISMATCH"
         else "BLOCKED"
     )
+    command_receipt = {key: value for key, value in command_result.items() if key not in {"stdout", "stderr"}}
     receipt: dict[str, Any] = {
         "schema_version": 1,
         "qualification_status": qualification_status,
