@@ -59,9 +59,11 @@ Rust example:
 
 The workflow [read-only-aura-guard-pilot.yml](.github/workflows/read-only-aura-guard-pilot.yml) checks out `vaidt/Aura-Guard` with `persist-credentials: false`, creates the manifest and receipt outside the target checkout, and generates a signed GitHub Artifact Attestation for the receipt. It runs on schedule, manual dispatch from `main`, and changes to ASIG’s relevant source/workflow paths.
 
-The current pilot is **source inventory only**. It does not run Aura-Guard tests and does not claim protocol conformance or runtime identity.
+The Aura-Guard pilot is **source inventory only**. It does not run Aura-Guard tests and does not claim protocol conformance or runtime identity.
 
-After the Aura-Guard pilot has a successful, reviewable receipt, the planned next phase adds separate read-only inventories and controlled adapter executions for RI-PY (`vaidt/aura-poc-a-core-v3.3`) and RI-RS (`vaidt/aura-guard-v1.3`). Those targets remain outside this stage’s changes.
+Separate RI-PY and RI-RS source inventories have now been captured for frozen commit/tree pins and independently reviewed; see [the inventory record](docs/REFERENCE_IMPLEMENTATIONS_INVENTORY.md) and [the evidence review](docs/REFERENCE_INVENTORY_EVIDENCE_VERIFICATION.md). This establishes source identity for those exact snapshots only. It does not execute the target test suites.
+
+Any controlled RI-PY/RI-RS runtime adapter execution remains a separate stage and is **BLOCKED** until explicit human/governance authorization, an approved test selection, and defined source/toolchain/test-harness bindings exist. No target repository is modified by the inventory stage.
 
 ## Verify an attestation
 
