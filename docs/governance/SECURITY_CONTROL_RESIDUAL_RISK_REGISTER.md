@@ -1,14 +1,14 @@
 # Security Control Residual Risk Register
 
 **Document ID:** ASIG-RISK-REG-001  
-**Version:** 0.1  
-**Status:** ACTIVE FOR INFRASTRUCTURE PREPARATION · R&D-ONLY RISK ACCEPTANCE  
+**Version:** 0.2 (G0 reconciliation proposal)  
+**Status:** ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY) · RESIDUAL RISKS OPEN  
 **Repository:** `vaidt/Kt-ry-Program`  
-**Branch:** `infra/ci-updates`  
+**Branch:** `integration`  
 **Decision date:** 2026-10-17  
 **Scope boundary:** non-authoritative R&D only; no promotion/release effect
 
-> This register records limited residual-risk acceptance for the proposed experimental track. It does not waive `main` branch protection, authorize release, close CAPA NC-ASIG-2026-10-17-PR10, or establish AURA Protocol conformance. The `integration` branch is not activated by this register.
+> This register records residual risks for the active, bounded experimental track on `integration`, under repository ruleset [25306960](https://github.com/vaidt/Kt-ry-Program/rules/25306960). It does not waive `main` branch protection, authorize Stage 3 or runtime work, authorize release, close CAPA NC-ASIG-2026-10-17-PR10, or establish AURA Protocol conformance. Risk acceptance is limited to non-authoritative R&D.
 
 ## RISK-ASIG-DEP-001 — No dedicated GitHub Dependency Review workflow
 
@@ -33,16 +33,16 @@
 4. The Gitleaks action on a push event scanned the pushed commit range as selected by the action (one commit in that step). A separate redacted full-history scan is now also part of the workflow. On the validated head below it scanned 132 commits / approximately 435.86 KB and reported `no leaks found`.
 5. The dedicated Dependency Review workflow is not present. This residual-risk entry records the bounded R&D-only treatment; it does not claim equivalence to Dependency Review.
 
-## RISK-ASIG-SAST-002 — CodeQL threshold rule configured; behavior validation pending
+## RISK-ASIG-SAST-002 — CodeQL threshold rule configured; negative-control enforcement validated
 
 | Field | Decision |
 |---|---|
-| Risk statement | A successful CodeQL job alone does not mean “zero alerts.” The required CodeQL security-alert severity threshold is now configured in the integration-targeted ruleset, but end-to-end enforcement has not yet been exercised against an existing `integration` ref because that branch has not been created. |
+| Risk statement | A successful CodeQL job alone does not mean “zero alerts.” The required CodeQL security-alert severity threshold is configured in the active ruleset targeting `integration`. End-to-end enforcement was subsequently exercised by negative-control PR #15, which produced a critical `py/code-injection` alert and was blocked from merging. The earlier statement that the target ref did not exist is historical and superseded by the baseline-promotion evidence. |
 | Evidence | Security-control run [39043855790](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043855790) on commit `7f5562747b264304a615ab8d1277bf15e49d32a8` completed successfully. CodeQL scanned 22/22 Python files, 5/5 GitHub Actions workflow files, and 2/2 JavaScript files; SARIF upload and processing completed. Ruleset [25306960](https://github.com/vaidt/Kt-ry-Program/rules/25306960) was updated and read back on 2026-10-17 with a `code_scanning` rule for `CodeQL`: `security_alerts_threshold = high_or_higher`, `alerts_threshold = none`. |
-| Treatment | CONFIGURED / READ-BACK VERIFIED; activation gate remains open pending behavior validation. After `integration` exists and the code-scanning analysis is associated with that ref, validate the native ruleset against the exact target commit and reference. Do not claim prevention of a merge until the branch/ref behavior is empirically verified. |
-| Status | CONFIGURATION PASS; ENFORCEMENT BEHAVIOR NOT YET TESTED. Experimental merges remain blocked until the remaining activation criteria are met. |
+| Treatment | CONFIGURED / READ-BACK VERIFIED; negative-control enforcement behavior validated by PR #15. Keep `codeql` required on every relevant PR and treat missing, skipped, stale, or failed results as non-PASS. |
+| Status | CONFIGURATION PASS; NEGATIVE-CONTROL ENFORCEMENT PASS. This does not establish zero alerts, broader security assurance, or release readiness. |
 
-## Ruleset evidence — future integration ref
+## Ruleset evidence — active integration ref
 
 A repository ruleset was created and read back on 2026-10-17:
 
@@ -50,7 +50,7 @@ A repository ruleset was created and read back on 2026-10-17:
 - Ruleset ID: `25306960`; enforcement: `active`
 - Exact target: `refs/heads/integration`; no bypass actors; read-back reports `current_user_can_bypass = never`
 - Active rules: deletion blocked; force pushes blocked; pull request required with zero required human approvals for the solo-developer R&D workflow; conversation resolution required; strict required status checks for `test-and-build (3.11)`, `test-and-build (3.12)`, `test-and-build (3.13)`, `runtime-adapter-integration`, `codeql`, `secret-scan`, and `python-dependency-audit`. All seven check contexts are bound to GitHub Actions app ID `15368`.
-- The `integration` branch has **not** been created. The ruleset currently protects the future matching ref only; the CodeQL severity-threshold rule remains outstanding as described above.
+- The `integration` branch exists at baseline-promotion merge commit `83e5f02ddb58b6203a795bdc33bf579593b9f913`. PR #19 passed all seven required status contexts on its exact head and was merged through the active ruleset without bypass. The seven checks also completed successfully on the resulting merge SHA. This activation does not close the residual risks below or authorize Stage 3.
 
 
 ## RISK-ASIG-LIC-001 — Validation-only license gate is not the final licensing decision
@@ -62,8 +62,8 @@ A repository ruleset was created and read back on 2026-10-17:
 | Test-only control | `pip-licenses==5.5.5`, machine-readable `.github/license-policy.json`, and `scripts/check_license_policy.py`. GPL-2.0/GPL-3.0/AGPL-3.0 families are blocked in validation only; LGPL/MPL, missing metadata, and unknown/unrecognized labels fail closed for manual review. The current policy excludes `aura-source-identity-gate` from scanner inventory so the undecided repository license does not self-trigger the test gate. |
 | Residual limitation | This test covers one synthetic GPLv3 label and the required status blocking behavior. It does not prove comprehensive license-expression normalization, source-file scanning for license texts, runtime/deployment license obligations, or a legal determination. The blocklist requires separate final review before any production use. |
 | Status | NEGATIVE-CONTROL TECHNICAL TEST PASS; FINAL LICENSE POLICY / LEGAL DISPOSITION OPEN; VALIDATION ONLY. |
-| Prohibited use | Do not claim repository licensing has been settled, do not change `UPSTREAM_AND_LICENSE.md` on this basis, and do not activate experimental merges or Stage 3. |
-| Review / expiry | Reassess before any promotion request to `main` or proposal to activate experimental merges; include legal/licensing review by the responsible authority. |
+| Prohibited use | Do not claim repository licensing has been settled or change `UPSTREAM_AND_LICENSE.md` on this basis. This validation-only control does not authorize production/release promotion, Stage 3, or AURA conformance; it does not negate the separately recorded bounded R&D activation. |
+| Review / expiry | Reassess before any promotion request to `main`, before production/release use, after a material licensing-policy change, and by the applicable review date; include legal/licensing review by the responsible authority. |
 
 
 ## RISK-ASIG-SLSA-001 — Synthetic artifact provenance passed; release-artifact provenance remains unvalidated
@@ -76,18 +76,18 @@ A repository ruleset was created and read back on 2026-10-17:
 | PR / cleanup | PR #18 closed without merge, `merged = false`, `merged_at = null`; prior API `mergeable_state = clean` is recorded and is not represented as a merge-blocking result. Branch ref deleted; REST lookup returned 404 and branch inventory had no matching ref. `integration` and `main` were not changed by this test. |
 | Residual limitation | Only the synthetic tarball is covered. No normal ASIG sdist/wheel/release artifact was verified in this exercise. The seven-day evidence artifacts are temporary; key digest, identity and outcome details are preserved in the validation record. The run does not establish SLSA Build Level 3 or prove source-code correctness. |
 | Status | SYNTHETIC-ARTIFACT TECHNICAL VALIDATION PASS; PRODUCT/RELEASE PROVENANCE OPEN; VALIDATION ONLY. |
-| Prohibited use | Do not claim production provenance coverage, source correctness, AURA conformance, or approval for experimental merges. Do not use this test to alter the authority boundary or change the governing status. |
+| Prohibited use | Do not claim production provenance coverage for actual release artifacts, source correctness, AURA conformance, or production/release approval. Do not use this synthetic test to alter the authority boundary or change the governing status. It does not replace the independently evidenced R&D activation record. |
 | Review / expiry | Before any promotion or activation request, attest the exact normal build artifacts, verify them out of band under the required workflow identity and source constraints, and capture durable evidence of each actual output digest. |
 
 ## Activation constraints
 
-This register alone does not satisfy the policy activation checklist. Before `integration` becomes available for experimental merges:
+This register alone does not satisfy the policy activation checklist. Following baseline promotion, the following controls remain applicable to continued experimental merges and any later promotion request:
 
 - `ASIG CI` and `ASIG Security Controls` must pass on the exact candidate head;
 - the redacted full-history Gitleaks scan must pass on the exact workflow revision;
-- the CodeQL `code_scanning` rule is now configured and read back in ruleset `25306960` (`security_alerts_threshold = high_or_higher`); enforcement behavior still must be validated once the target ref has CodeQL results;
-- positive/negative control tests and the remaining activation requirements in `SOLO_DEV_DUAL_TRACK_POLICY.md` must be evidenced;
-- `main` branch protection and `enforce_admins = true` must remain unchanged and be independently read back.
+- the CodeQL `code_scanning` rule is configured in ruleset `25306960` (`security_alerts_threshold = high_or_higher`) and its merge-blocking behavior was observed on negative-control PR #15;
+- positive/negative control tests and the remaining operational requirements in `SOLO_DEV_DUAL_TRACK_POLICY.md` must remain evidenced;
+- `main` was re-read as protected with its four existing required checks unchanged. The current GitHub App connection could not independently read the classic `enforce_admins` property (API returned 403); do not treat that property as verified by this record. Any claim about that specific setting requires a read path with the necessary administration permission.
 
-**End of register.** The Dependency Review exception is bounded to non-authoritative R&D. The license negative-control and synthetic SLSA artifact-provenance validations technically passed, but final license-policy/legal disposition and provenance verification for actual release artifacts remain open. The separate CodeQL alert-enforcement gap described above and the remaining activation controls continue to block experimental merges.
+**End of register.** The Dependency Review exception is bounded to non-authoritative R&D. The license negative-control and synthetic SLSA artifact-provenance validations technically passed, but final license-policy/legal disposition and provenance verification for actual release artifacts remain open. CodeQL threshold enforcement was validated by the negative-control PR; broader residual risks remain open and continue to block any release/promotion or stronger-assurance claim. They do not revoke the separately evidenced, bounded R&D-only activation of `integration`.
 
