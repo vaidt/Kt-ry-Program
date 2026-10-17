@@ -78,8 +78,13 @@ def run_node(
     else:
         identity_status = "UNKNOWN"
 
+    qualification_status = (
+        "FAIL" if identity_status == "MISMATCH" or command_result["exit_code"] != 0
+        else "BLOCKED"
+    )
     receipt: dict[str, Any] = {
         "schema_version": 1,
+        "qualification_status": qualification_status,
         "kind": "ASIG_NODE_RUNTIME_RECEIPT",
         "runtime": "node",
         "run_id": env["ASIG_RUN_ID"],
