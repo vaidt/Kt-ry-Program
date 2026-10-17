@@ -1,0 +1,258 @@
+name: ASIG Read-only Reference Source Inventory
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/aura_source_identity/**"
+      - "src/sitecustomize.py"
+      - "pyproject.toml"
+      - ".github/workflows/read-only-reference-source-inventory.yml"
+      - "docs/REFERENCE_IMPLEMENTATIONS_INVENTORY.md"
+  schedule:
+    - cron: "41 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory-reference-sources:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      EXPECTED_ASIG_REPOSITORY_ID: "1423292837"
+      RI_PY_REPOSITORY: vaidt/aura-poc-a-core-v3.3
+      RI_PY_REPOSITORY_ID: "1414456591"
+      RI_PY_COMMIT: 1d15ecbed8470476684951e9ff301a3cfc26a46d
+      RI_PY_TREE: 2ada7e80083defab47cea18a2bd81d228685a9e0
+      RI_RS_REPOSITORY: vaidt/aura-guard-v1.3
+      RI_RS_REPOSITORY_ID: "1378273687"
+      RI_RS_COMMIT: e0ed7a8b381b725fe65bd86716894bfdf17d3a94
+      RI_RS_TREE: 67e2fc417cf6e2ecf0110e8684db2522d8149071
+
+    steps:
+      - name: Checkout ASIG auditor
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ASIG
+        run: python -m pip install .
+
+      - name: Fetch exact public source commits without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GIT_TERMINAL_PROMPT=0
+          fetch_pinned() {
+            local repo="$1"
+            local commit="$2"
+            local target_root="$3"
+            mkdir -p "$target_root"
+            git -C "$target_root" init
+            git -C "$target_root" remote add origin "https://github.com/$repo.git"
+            git -C "$target_root" -c credential.helper= fetch --no-tags --depth=1 origin "$commit"
+            git -C "$target_root" checkout --detach FETCH_HEAD
+            test "$(git -C "$target_root" rev-parse HEAD)" = "$commit"
+            test -z "$(git -C "$target_root" status --porcelain --untracked-files=all)"
+            chmod -R a-w "$target_root"
+            test "$(git -C "$target_root" rev-parse HEAD)" = "$commit"
+            echo "Pinned read-only source: $repo @ $commit"
+          }
+          fetch_pinned "$RI_PY_REPOSITORY" "$RI_PY_COMMIT" targets/RI-PY
+          fetch_pinned "$RI_RS_REPOSITORY" "$RI_RS_COMMIT" targets/RI-RS
+
+      - name: Capture and validate both source inventories
+        shell: bash
+        env:
+          RI_PY_MANIFEST: ${{ runner.temp }}/asig-ri-py-source-manifest.json
+          RI_PY_RECEIPT: ${{ runner.temp }}/asig-ri-py-source-receipt.json
+          RI_RS_MANIFEST: ${{ runner.temp }}/asig-ri-rs-source-manifest.json
+          RI_RS_RECEIPT: ${{ runner.temp }}/asig-ri-rs-source-receipt.json
+          PILOT_CONTEXT: ${{ runner.temp }}/asig-reference-inventory-context.json
+        run: |
+          set -euo pipefail
+          export GIT_OPTIONAL_LOCKS=0
+          aura-source-identity audit \
+            --root targets/RI-PY --repository "$RI_PY_REPOSITORY" \
+            --source-ref "commit:$RI_PY_COMMIT" \
+            --manifest-output "$RI_PY_MANIFEST" --output "$RI_PY_RECEIPT"
+          aura-source-identity audit \
+            --root targets/RI-RS --repository "$RI_RS_REPOSITORY" \
+            --source-ref "commit:$RI_RS_COMMIT" \
+            --manifest-output "$RI_RS_MANIFEST" --output "$RI_RS_RECEIPT"
+
+          python - <<'PY'
+          import json, os, pathlib, subprocess
+          from aura_source_identity.canonical import object_sha256
+
+          def read_json(key):
+              return json.loads(pathlib.Path(os.environ[key]).read_text(encoding="utf-8"))
+
+          context_targets = {}
+          configs = [
+              ("RI-PY", "RI_PY_REPOSITORY", "RI_PY_REPOSITORY_ID", "RI_PY_COMMIT",
+               "RI_PY_TREE", "targets/RI-PY", "RI_PY_MANIFEST", "RI_PY_RECEIPT"),
+              ("RI-RS", "RI_RS_REPOSITORY", "RI_RS_REPOSITORY_ID", "RI_RS_COMMIT",
+               "RI_RS_TREE", "targets/RI-RS", "RI_RS_MANIFEST", "RI_RS_RECEIPT"),
+          ]
+          for label, repo_key, id_key, commit_key, tree_key, root, manifest_key, receipt_key in configs:
+              repo, repo_id = os.environ[repo_key], os.environ[id_key]
+              commit, tree = os.environ[commit_key], os.environ[tree_key]
+              manifest, receipt = read_json(manifest_key), read_json(receipt_key)
+              assert receipt["audit_status"] == "PASS", (label, receipt)
+              assert receipt["target"]["repository"] == repo
+              assert receipt["target"]["requested_ref"] == f"commit:{commit}"
+              assert receipt["target"]["commit_sha"] == commit == manifest["git"]["commit_sha"]
+              assert receipt["target"]["tree_sha"] == tree == manifest["git"]["tree_sha"]
+              assert manifest["git"]["working_tree_clean"] is True
+              assert receipt["source_identity_verification"]["status"] == "EXACT_MATCH"
+              assert receipt["source_inventory"]["manifest_sha256"] == manifest["manifest_sha256"]
+              assert receipt["protocol_conformance_claimed"] is False
+              assert receipt["runtime_tests_executed"] is False
+              assert receipt["runtime_identity_observed"] is False
+              m = dict(manifest)
+              manifest_digest = m.pop("manifest_sha256")
+              assert object_sha256(m) == manifest_digest, (label, "manifest self-digest mismatch")
+              r = dict(receipt)
+              receipt_digest = r.pop("receipt_sha256")
+              assert object_sha256(r) == receipt_digest, (label, "receipt self-digest mismatch")
+              head = subprocess.check_output(["git", "-C", root, "rev-parse", "HEAD"], text=True).strip()
+              status = subprocess.check_output(
+                  ["git", "-C", root, "status", "--porcelain", "--untracked-files=all"], text=True)
+              assert head == commit and not status, (label, "measured source changed", head, status)
+              context_targets[label] = {
+                  "repository": repo, "repository_id": repo_id,
+                  "pinned_commit_sha": commit, "git_tree_sha": tree,
+                  "source_ref": f"commit:{commit}", "source_identity_status": "PASS",
+                  "manifest_sha256": manifest_digest, "receipt_sha256": receipt_digest,
+                  "file_count": manifest["inventory"]["file_count"],
+                  "runtime_tests_executed": False, "runtime_identity_observed": False,
+                  "runtime_qualification_status": "BLOCKED",
+                  "protocol_conformance_claimed": False,
+              }
+              print(f"{label}: source identity PASS; runtime qualification BLOCKED")
+              print(f"  repository id={repo_id}; commit={commit}; tree={tree}; files={manifest['inventory']['file_count']}")
+
+          assert os.environ["GITHUB_REPOSITORY"] == "vaidt/Kt-ry-Program"
+          assert os.environ["GITHUB_REPOSITORY_ID"] == os.environ["EXPECTED_ASIG_REPOSITORY_ID"]
+          context = {
+              "schema_version": 1,
+              "kind": "ASIG_REFERENCE_SOURCE_INVENTORY_CONTEXT",
+              "audit_scope": "READ_ONLY_SOURCE_INVENTORY_ONLY",
+              "asig_repository": os.environ["GITHUB_REPOSITORY"],
+              "asig_repository_id": os.environ["GITHUB_REPOSITORY_ID"],
+              "asig_workflow": os.environ["GITHUB_WORKFLOW"],
+              "asig_workflow_ref": os.environ["GITHUB_REF"],
+              "asig_workflow_commit": os.environ["GITHUB_SHA"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "targets": context_targets,
+              "runtime_tests_executed": False,
+              "runtime_identity_observed": False,
+              "protocol_conformance_claimed": False,
+              "release_gate_authorized": False,
+          }
+          pathlib.Path(os.environ["PILOT_CONTEXT"]).write_text(
+              json.dumps(context, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8")
+          PY
+
+      - name: Package immutable reference inventory evidence
+        id: package
+        shell: bash
+        env:
+          SUMS_PATH: ${{ runner.temp }}/asig-reference-inventory-SHA256SUMS.txt
+          ARCHIVE_PATH: ${{ runner.temp }}/asig-reference-source-inventory.tar.gz
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          sha256sum \
+            asig-ri-py-source-manifest.json \
+            asig-ri-py-source-receipt.json \
+            asig-ri-rs-source-manifest.json \
+            asig-ri-rs-source-receipt.json \
+            asig-reference-inventory-context.json \
+            > "$SUMS_PATH"
+          sha256sum -c "$SUMS_PATH"
+          tar -czf "$ARCHIVE_PATH" \
+            asig-ri-py-source-manifest.json \
+            asig-ri-py-source-receipt.json \
+            asig-ri-rs-source-manifest.json \
+            asig-ri-rs-source-receipt.json \
+            asig-reference-inventory-context.json \
+            asig-reference-inventory-SHA256SUMS.txt
+          echo "archive_path=$ARCHIVE_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Attest the complete reference inventory archive
+        id: attest
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ runner.temp }}/asig-reference-source-inventory.tar.gz
+
+      - name: Verify signature, timestamp, repository, and signer workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+          EVIDENCE_ARCHIVE: ${{ steps.package.outputs.archive_path }}
+          EXPECTED_ASIG_SHA: ${{ github.sha }}
+          EXPECTED_ASIG_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          test -s "$BUNDLE_PATH"
+          test -s "$EVIDENCE_ARCHIVE"
+          gh attestation verify "$EVIDENCE_ARCHIVE" \
+            --repo vaidt/Kt-ry-Program \
+            --bundle "$BUNDLE_PATH" \
+            --signer-workflow "vaidt/Kt-ry-Program/.github/workflows/read-only-reference-source-inventory.yml" \
+            --source-digest "$EXPECTED_ASIG_SHA" \
+            --source-ref "$EXPECTED_ASIG_REF" \
+            --format json > "$RUNNER_TEMP/asig-reference-inventory-attestation-verification.json"
+          python - <<'PY'
+          import json, os, pathlib
+          results = json.loads(
+              (pathlib.Path(os.environ["RUNNER_TEMP"]) / "asig-reference-inventory-attestation-verification.json")
+              .read_text(encoding="utf-8"))
+          assert isinstance(results, list) and results, "attestation verifier returned no verified statements"
+          for item in results:
+              verification = item.get("verificationResult", {})
+              certificate = verification.get("signature", {}).get("certificate", {})
+              timestamps = verification.get("verifiedTimestamps")
+              assert certificate, "verified signer certificate is absent"
+              assert str(certificate.get("sourceRepositoryIdentifier", "")) == "1423292837", certificate
+              assert timestamps, "no cryptographically verified timestamp was returned"
+          print("Reference inventory archive attestation verification PASS")
+          print("ASIG signer repository ID: 1423292837")
+          print("Verified statements:", len(results))
+          PY
+
+      - name: Upload read-only reference source inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asig-reference-source-inventory-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/asig-ri-py-source-manifest.json
+            ${{ runner.temp }}/asig-ri-py-source-receipt.json
+            ${{ runner.temp }}/asig-ri-rs-source-manifest.json
+            ${{ runner.temp }}/asig-ri-rs-source-receipt.json
+            ${{ runner.temp }}/asig-reference-inventory-context.json
+            ${{ runner.temp }}/asig-reference-inventory-SHA256SUMS.txt
+            ${{ runner.temp }}/asig-reference-source-inventory.tar.gz
+            ${{ runner.temp }}/asig-reference-inventory-attestation-verification.json
+            ${{ steps.attest.outputs.bundle-path }}
+          if-no-files-found: warn
+          retention-days: 90
