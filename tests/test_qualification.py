@@ -76,6 +76,31 @@ class QualificationTests(unittest.TestCase):
             result = qualify_evidence(evidence, verify_manifest(manifest, root))
             self.assertEqual(result["status"], "FAIL")
 
+    def test_unknown_source_identity_is_blocked_not_misreported_as_mismatch(self) -> None:
+        manifest_verification = {"status": "UNKNOWN", "manifest_sha256": None}
+        result = qualify_evidence(
+            {
+                "schema_version": 1,
+                "expected_manifest_sha256": "a" * 64,
+                "test_plan": {},
+            },
+            manifest_verification,
+        )
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["failures"])
+
+    def test_invalid_hash_text_cannot_qualify(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "repo"
+            root.mkdir()
+            git_repo(root)
+            manifest = create_manifest(root, repository="test/repo")
+            evidence = evidence_for(manifest)
+            evidence["test_plan"]["expected_test_source_sha256"] = "not-a-hash"
+            evidence["test_plan"]["observed_test_source_sha256"] = "not-a-hash"
+            result = qualify_evidence(evidence, verify_manifest(manifest, root))
+            self.assertEqual(result["status"], "BLOCKED")
+
     def test_evaluator_must_test_delivered_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "repo"
