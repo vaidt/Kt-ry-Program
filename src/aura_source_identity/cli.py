@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
-from .inventory import ManifestError, create_manifest, verify_manifest
+from .inventory import create_manifest, verify_manifest
 from .qualification import qualify_evidence
 
 
@@ -30,8 +30,18 @@ def _emit(value: Any, output: str | None = None) -> None:
     print(json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False))
 
 
+def _ensure_outside_root(root: Path, output: str | None) -> None:
+    if output is None:
+        return
+    resolved_root = root.resolve(strict=True)
+    resolved_output = Path(output).expanduser().resolve(strict=False)
+    if resolved_output == resolved_root or resolved_root in resolved_output.parents:
+        raise ValueError("manifest and report outputs must be outside the repository under measurement")
+
+
 def _capture(args: argparse.Namespace) -> int:
     try:
+        _ensure_outside_root(Path(args.root), args.output)
         manifest = create_manifest(
             Path(args.root),
             repository=args.repository,
@@ -59,6 +69,7 @@ def _capture(args: argparse.Namespace) -> int:
 
 def _verify(args: argparse.Namespace) -> int:
     try:
+        _ensure_outside_root(Path(args.root), args.output)
         manifest = _read_json(Path(args.manifest))
         result = verify_manifest(manifest, Path(args.root))
     except (OSError, json.JSONDecodeError, ValueError) as exc:
@@ -69,6 +80,7 @@ def _verify(args: argparse.Namespace) -> int:
 
 def _qualify(args: argparse.Namespace) -> int:
     try:
+        _ensure_outside_root(Path(args.root), args.output)
         manifest = _read_json(Path(args.manifest))
         evidence = _read_json(Path(args.evidence))
         source_verification = verify_manifest(manifest, Path(args.root))
