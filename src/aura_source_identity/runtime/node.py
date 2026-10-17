@@ -94,7 +94,7 @@ def run_node(
         "runtime": "node",
         "run_id": env["ASIG_RUN_ID"],
         "source_snapshot": source_snapshot,
-        "command": command_result,
+        "command": command_receipt,
         "module_identity": {
             "status": identity_status,
             "expected_specifiers": sorted(expected),
