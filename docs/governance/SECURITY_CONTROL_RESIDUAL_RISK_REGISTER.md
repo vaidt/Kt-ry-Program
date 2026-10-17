@@ -33,14 +33,14 @@
 4. The Gitleaks action on a push event scanned the pushed commit range as selected by the action (one commit in that step). A separate redacted full-history scan is now also part of the workflow. On the validated head below it scanned 132 commits / approximately 435.86 KB and reported `no leaks found`.
 5. The dedicated Dependency Review workflow is not present. This residual-risk entry records the bounded R&D-only treatment; it does not claim equivalence to Dependency Review.
 
-## RISK-ASIG-SAST-002 — CodeQL run status is not yet severity-threshold enforcement
+## RISK-ASIG-SAST-002 — CodeQL threshold rule configured; behavior validation pending
 
 | Field | Decision |
 |---|---|
-| Risk statement | The `codeql` status check currently proves that the analysis job ran successfully and uploaded SARIF, but the integration-targeted ruleset does not yet have GitHub's separate `code_scanning` rule with an explicit severity threshold. A successful job alone must not be interpreted as “zero alerts.” |
-| Evidence | On commit `5dae7b275277c92dc6f0173e6e74948256b4f370`, CodeQL scanned 22/22 Python files, 5/5 GitHub Actions workflow files, and 2/2 JavaScript files; SARIF upload and analysis processing completed successfully. Alert severity inventory was not independently reconciled as part of this run. |
-| Treatment | OPEN — activation blocker for experimental merges. After `integration` exists and has CodeQL results attached to that ref, add a `code_scanning` ruleset rule for CodeQL with an explicit security-alert threshold and a code-alert threshold, then read it back. Keep the branch unavailable for experimental merges until this gate is in place. |
-| Status | NOT ACCEPTED for merge exposure; block experimental merges until closed. |
+| Risk statement | A successful CodeQL job alone does not mean “zero alerts.” The required CodeQL security-alert severity threshold is now configured in the integration-targeted ruleset, but end-to-end enforcement has not yet been exercised against an existing `integration` ref because that branch has not been created. |
+| Evidence | Security-control run [39043855790](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043855790) on commit `7f5562747b264304a615ab8d1277bf15e49d32a8` completed successfully. CodeQL scanned 22/22 Python files, 5/5 GitHub Actions workflow files, and 2/2 JavaScript files; SARIF upload and processing completed. Ruleset [25306960](https://github.com/vaidt/Kt-ry-Program/rules/25306960) was updated and read back on 2026-10-17 with a `code_scanning` rule for `CodeQL`: `security_alerts_threshold = high_or_higher`, `alerts_threshold = none`. |
+| Treatment | CONFIGURED / READ-BACK VERIFIED; activation gate remains open pending behavior validation. After `integration` exists and the code-scanning analysis is associated with that ref, validate the native ruleset against the exact target commit and reference. Do not claim prevention of a merge until the branch/ref behavior is empirically verified. |
+| Status | CONFIGURATION PASS; ENFORCEMENT BEHAVIOR NOT YET TESTED. Experimental merges remain blocked until the remaining activation criteria are met. |
 
 ## Ruleset evidence — future integration ref
 
@@ -58,7 +58,7 @@ This register alone does not satisfy the policy activation checklist. Before `in
 
 - `ASIG CI` and `ASIG Security Controls` must pass on the exact candidate head;
 - the redacted full-history Gitleaks scan must pass on the exact workflow revision;
-- the CodeQL `code_scanning` severity-threshold rule must be added after the branch has a valid analysis for its ref and verified by read-back;
+- the CodeQL `code_scanning` rule is now configured and read back in ruleset `25306960` (`security_alerts_threshold = high_or_higher`); enforcement behavior still must be validated once the target ref has CodeQL results;
 - positive/negative control tests and the remaining activation requirements in `SOLO_DEV_DUAL_TRACK_POLICY.md` must be evidenced;
 - `main` branch protection and `enforce_admins = true` must remain unchanged and be independently read back.
 
