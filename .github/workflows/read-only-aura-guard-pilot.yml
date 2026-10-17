@@ -43,16 +43,18 @@ jobs:
       - name: Install ASIG
         run: python -m pip install .
 
-      - name: Checkout pinned Aura-Guard source without stored credentials
-        uses: actions/checkout@v4
-        with:
-          repository: vaidt/Aura-Guard
-          ref: 7d2f5746ae61a66edcd11d75bff0787bed854363
-          token: ""
-          path: targets/Aura-Guard
-          fetch-depth: 1
-          persist-credentials: false
-          submodules: false
+      - name: Fetch pinned public Aura-Guard source without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GIT_TERMINAL_PROMPT=0
+          target_root="targets/Aura-Guard"
+          mkdir -p "$target_root"
+          git -C "$target_root" init
+          git -C "$target_root" remote add origin https://github.com/vaidt/Aura-Guard.git
+          git -C "$target_root" -c credential.helper= fetch --no-tags --depth=1 origin "$EXPECTED_TARGET_COMMIT"
+          git -C "$target_root" checkout --detach FETCH_HEAD
+          test "$(git -C "$target_root" rev-parse HEAD)" = "$EXPECTED_TARGET_COMMIT"
 
       - name: Make target checkout non-writable and assert commit identity
         shell: bash
