@@ -77,5 +77,5 @@ jobs:
           python -m venv .venv
           .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip
           .venv/bin/python -m pip install --disable-pip-version-check . pip-audit==2.10.1
-      - name: Audit installed project environment
-        run: .venv/bin/pip-audit --local --strict --progress-spinner off
+      - name: Audit dependencies declared by the local project
+        run: .venv/bin/pip-audit . --strict --progress-spinner off
