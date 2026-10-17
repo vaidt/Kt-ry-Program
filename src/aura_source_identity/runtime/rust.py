@@ -32,6 +32,8 @@ def run_rust(
     manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve(strict=True)
+    if not argv or Path(argv[0]).name != "cargo":
+        raise ValueError("Rust adapter requires Cargo as the command executable")
     if output_path is None:
         output_path = Path(tempfile.gettempdir()) / f"asig-rust-{uuid.uuid4().hex}.json"
     output_path = output_path.expanduser().resolve(strict=False)
