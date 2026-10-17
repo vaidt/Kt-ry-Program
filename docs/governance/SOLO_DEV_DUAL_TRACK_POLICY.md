@@ -2,20 +2,20 @@
 
 **Document ID:** ASIG-GOV-DT-001  
 **Version:** 0.1  
-**Status:** RATIFIED FOR PREPARATION ONLY · NOT ACTIVE FOR INTEGRATION  
+**Status:** RATIFIED FOR PREPARATION AND VALIDATION ONLY · NOT ACTIVE FOR EXPERIMENTAL MERGES  
 **Repository scope:** `vaidt/Kt-ry-Program` (ASIG engineering controls only)  
 **Policy record:** [PR #12 operational decision](https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660)  
 **Decision date:** 2026-10-17  
 **Normative effect:** NONE ON AURA PROTOCOL; repository-level operational effect is limited to CI/security-infrastructure preparation  
-**Implementation authorization:** LIMITED — isolated CI/security-infrastructure preparation only; `integration` activation NOT AUTHORIZED
+**Implementation authorization:** LIMITED — isolated CI/security-infrastructure preparation and validation-only branch creation/test PRs from the recorded baseline; experimental merges NOT AUTHORIZED
 
-> The repository owner recorded limited operational ratification for implementation preparation in PR #12. This does not activate `integration`, change GitHub protection settings, close CAPA NC-ASIG-2026-10-17-PR10, authorize runtime work, or modify AURA Protocol semantics. Experimental merges on `integration` remain prohibited until the activation checklist below is satisfied and its controls have been verified.
+> The repository owner recorded limited operational ratification for implementation preparation in PR #12; this document now records a further limited validation authorization. The `integration` ref may be created at exactly `487e63069d18d2ab3f289131e9a5427f0cc61116` solely to run isolated positive/negative CI and security-control PRs. This does not activate experimental merges, change `main` protection, close CAPA NC-ASIG-2026-10-17-PR10, authorize runtime work, or modify AURA Protocol semantics. No experimental code, including Stage 3 architecture, may be merged until every activation gate is evidenced and the validation PRs are closed without merging.
 
 ## 1. Purpose and decision requested
 
 Define a controlled dual-track workflow for a repository operated by a solo developer, while preserving `main` as the authoritative integration and release boundary.
 
-The recorded decision adopts this policy only as authorization to prepare CI/security infrastructure. The `integration` branch is not yet authorized for experimental merges. Activation requires the verified controls and completed checklist in Section 9; `integration` must never become an alternate authoritative branch.
+The recorded decision adopts this policy for infrastructure preparation and a strictly bounded validation phase. The `integration` branch may be created only at the exact SHA stated in Section 9, for validation-control PRs only; it is not authorized for experimental merges. Activation requires the verified controls and completed checklist in Section 9; `integration` must never become an alternate authoritative branch.
 
 The decision requested from the competent repository/governance authority is whether to adopt this policy, reject it, or return it for changes. Adoption must be recorded separately from this proposal.
 
@@ -68,7 +68,7 @@ Required invariants:
 
 ### 4.2 Experimental track — proposed `integration`
 
-The branch may be created only after this policy is ratified and the activation checklist in Section 9 passes.
+The branch may be created for validation-only purposes under Section 9 after this authorization is committed. This is a narrow exception for testing controls, not activation for experimental merges; the full activation checklist remains outstanding.
 
 Permitted activity, subject to the repository's accepted licensing and security requirements:
 
@@ -94,7 +94,7 @@ For every pull request targeting `integration`, require:
 - schema parsing, package compilation, and build checks already defined by the repository CI;
 - additional tests relevant to the change, with test selection and expected outcomes stated in the pull request.
 
-As known on 2026-10-17, `.github/workflows/ci.yml` defines the three-version Python matrix and `runtime-adapter-integration`, and triggers CI for pull requests. Its push trigger names `main` and `feat/**`; therefore direct pushes to a future `integration` branch are not currently shown as covered by that push trigger. Before activation, either extend triggers through a reviewed change or expressly configure and verify an equivalent workflow. Do not infer coverage from the existence of the workflow file alone.
+As read from `infra/ci-updates` on 2026-10-17, `.github/workflows/ci.yml` includes `integration` in its push trigger and `.github/workflows/security-controls.yml` includes `integration` in its push trigger and pull-request target filters. This is configuration evidence only. After creating `integration`, verify actual runs against the exact ref and each negative/positive control PR; do not infer execution or enforcement from workflow YAML alone.
 
 Every mandatory check must report success for the exact pull-request head SHA. A missing or inconclusive check blocks merging to the experimental branch.
 
@@ -200,12 +200,23 @@ CAPA closure requires its own evidence showing that the corrective actions were 
 
 The PR #11 exception record, if merged in accordance with its explicitly authorized exception procedure, must remain transparently identified as an exception—not as a substitute for independent human review. Any decision to change the underlying policy must state whether it applies prospectively only and how unresolved past deviations will be handled.
 
-## 9. Activation checklist — do not activate until every item is evidenced
+## 9. Activation checklist — do not activate experimental merges until every item is evidenced
+
+### 9.0 Transitional authorization — validation only
+
+**Validation authorization status: AUTHORIZED FOR VALIDATION ONLY.** This authorization permits only the following bounded actions:
+
+1. Create `integration` at exactly `487e63069d18d2ab3f289131e9a5427f0cc61116`.
+2. Create an isolated positive-control PR with a harmless change and separate negative-control PRs for CodeQL and Gitleaks. The negative controls must remain isolated to their own temporary branches and must not be merged.
+3. Capture the exact head SHAs, workflow run URLs, required status-check conclusions, CodeQL alert details, ruleset evaluation evidence, and observed mergeability/merge-block state.
+4. Close every validation PR without merging and delete its temporary source branch. Keep `integration` free of test vectors; do not merge the negative-control files.
+
+No experimental code, including Stage 3 architecture, may be merged to `integration` until all activation checklist items are satisfied and separately verified. This validation authorization does not permit changes to `main`, does not waive required `main` review, and does not activate runtime or protocol-conformance work.
 
 - [x] Repository-owner decision and limited policy-ratification record identified: PR #12 comment https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660.
 - [x] Policy ratified for infrastructure preparation only on 2026-10-17. This does not authorize integration merges; all remaining activation controls are still required.
 - [x] CAPA status and relationship are documented as a separate, unresolved record; no automatic closure is inferred.
-- [ ] `integration` branch created from an identified base SHA. No branch is created by the present preparation step.
+- [ ] `integration` branch created at the authorized exact base SHA `487e63069d18d2ab3f289131e9a5427f0cc61116`; creation is validation-only and does not enable experimental merges.
 - [ ] CI triggers verified for pull requests and for any permitted push-based development workflow on the target ref.
 - [x] Required status-check names and provider captured and read back in ruleset ID `25306960`; check contexts are bound to GitHub Actions app ID `15368`.
 - [ ] SAST, dependency, secret, and applicable license scanners tested with positive and negative controls.
@@ -231,9 +242,9 @@ Review the policy after a security incident, material change to repository workf
 
 | Item | Status at decision time |
 |---|---|
-| This policy | RATIFIED FOR INFRASTRUCTURE PREPARATION ONLY / INTEGRATION MERGES NOT AUTHORIZED |
+| This policy | RATIFIED FOR PREPARATION AND VALIDATION ONLY / EXPERIMENTAL MERGES NOT AUTHORIZED |
 | `main` protection | Read back 2026-10-17 and unchanged: protected, admin enforcement true, one required approval, original four required CI contexts |
-| `integration` branch | NOT CREATED |
+| `integration` branch | Authorized for validation-only creation at `487e63069d18d2ab3f289131e9a5427f0cc61116`; experimental merges remain prohibited until all checklist gates pass |
 | CI and security evidence checkpoint | `ASIG CI` run [39043855839](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043855839) and `ASIG Security Controls` run [39043855790](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043855790) succeeded on commit `7f5562747b264304a615ab8d1277bf15e49d32a8` |
 | CodeQL | Analysis successful; scanned 22/22 Python files, 5/5 workflow files and 2/2 JavaScript files; SARIF upload completed. Ruleset 25306960 now configures `security_alerts_threshold = high_or_higher`; behavior validation on the actual `integration` ref remains open |
 | Gitleaks | Push-diff scan found no leaks; redacted full-history scan on the cited evidence checkpoint scanned 132 commits / ~442.56 KB and found no leaks |
@@ -246,4 +257,4 @@ Review the policy after a security incident, material change to repository workf
 
 ---
 
-**End of policy.** This document records limited authorization for infrastructure preparation and links to recorded configuration read-backs. Successful scan jobs and the ruleset read-back do not by themselves prove end-to-end merge blocking on a not-yet-created `integration` ref; experimental merges remain unauthorized until the remaining activation checklist is satisfied.
+**End of policy.** This document records limited authorization for infrastructure preparation and validation only. Successful scan jobs and ruleset read-back do not by themselves prove end-to-end merge blocking on `integration`. Validation PRs must be closed without merging; experimental merges remain unauthorized until every activation checklist gate is satisfied.
