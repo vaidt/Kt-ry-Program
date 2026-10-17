@@ -1,6 +1,6 @@
 # AURA Adoption Map
 
-Status: staged rollout proposal. The ASIG feature branch has a read-only Aura-Guard source audit workflow and runtime adapter prototypes. The signed pilot receipt must be reviewed before proceeding to RI-PY/RI-RS. No target repository mutation is authorized or performed by this stage.
+Status: staged rollout proposal. ASIG main contains the read-only Aura-Guard pilot workflow and runtime adapter prototypes. The pilot now pins target commit `7d2f5746ae61a66edcd11d75bff0787bed854363`, keeps outputs outside the target checkout, and attests the packaged evidence. Pilot result remains **PENDING execution and independent evidence review**; workflow code alone is not evidence of a successful run. No target repository mutation is authorized or performed by this stage.
 
 ## Intended integration role
 
@@ -22,7 +22,7 @@ ASIG runs beside Aura-Guard, RI-PY, and RI-RS as an engineering control. It prov
 
 1. **ASIG standalone CI** — run unit and mutation tests for the source identity and adapter receipts.
 2. **Aura-Guard read-only source pilot** — inventory only, write output outside target checkout, sign the receipt in the ASIG repository workflow. Do not alter Aura-Guard.
-3. **Review the signed pilot** — verify attestation signer identity, target commit/tree, source manifest digest, and explicit scope limitations. If the workflow or evidence fails, stop; do not treat absence as PASS.
+3. **Review the signed pilot** — follow `docs/PILOT_EVIDENCE_VERIFICATION.md` to verify the attestation signer identity and timestamp, target commit/tree, source manifest digest, checksum list, and explicit scope limitations. If the workflow or evidence fails, stop; do not treat absence as PASS.
 4. **RI-PY read-only pilot** — only after step 3 is reviewed, capture the frozen core repository and add a controlled Python runtime/test run against an approved test list.
 5. **RI-RS read-only pilot** — capture the Rust repository and toolchain context; do not claim live source identity until a verifiable binary/test-harness binding has been designed and tested.
 6. **Mutation and independent review** — test wrong-source imports, incomplete IDs, altered manifests, changed artifacts, and invalid/missing attestations.
