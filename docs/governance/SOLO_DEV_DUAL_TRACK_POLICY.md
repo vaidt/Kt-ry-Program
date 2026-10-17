@@ -4,12 +4,12 @@
 **Version:** 0.2  
 **Status:** ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY) · NON-AUTHORITATIVE · EFFECTIVE ON `integration` AFTER CLEAN BASELINE-PROMOTION PR MERGE  
 **Repository scope:** `vaidt/Kt-ry-Program` (ASIG engineering controls only)  
-**Policy record:** [PR #12 operational decision](https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660)  
+**Policy record:** [PR #12 operational decision](https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660); [R&D-only activation record](R_AND_D_EXPERIMENTAL_MERGE_ACTIVATION_RECORD.md)  
 **Decision date:** 2026-10-17  
 **Normative effect:** NONE ON AURA PROTOCOL; repository-level operational effect is limited to non-authoritative R&D experimental merges on `integration` under this policy  
 **Implementation authorization:** ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY) — limited to non-authoritative work on `integration`, effective only after the clean baseline-promotion PR merges with all seven required checks successful; Stage 3, runtime qualification, target-repository changes, release promotion, and AURA Protocol conformance remain NOT AUTHORIZED
 
- > The repository owner previously ratified infrastructure preparation in PR #12 and authorized validation-only controls. The present policy revision records the bounded transition to `ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY)`. This status becomes operational on `integration` only after the clean baseline-promotion PR from `infra/ci-updates` is merged under active ruleset `25306960` with all seven required checks successful. It permits non-authoritative R&D experimentation on `integration` only. It does not change `main` protection, close CAPA NC-ASIG-2026-10-17-PR10, authorize Stage 3 or runtime work, authorize changes to AURA target repositories, establish release provenance, settle the final licensing decision, or modify AURA Protocol semantics.
+> The repository owner previously ratified infrastructure preparation in PR #12 and authorized validation-only controls. The present policy revision records the bounded transition to `ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY)`. This status becomes operational on `integration` only after the clean baseline-promotion PR from `infra/ci-updates` is merged under active ruleset `25306960` with all seven required checks successful. It permits non-authoritative R&D experimentation on `integration` only. It does not change `main` protection, close CAPA NC-ASIG-2026-10-17-PR10, authorize Stage 3 or runtime work, authorize changes to AURA target repositories, establish release provenance, settle the final licensing decision, or modify AURA Protocol semantics.
 
 ## 1. Purpose and decision requested
 
@@ -204,7 +204,7 @@ The PR #11 exception record, if merged in accordance with its explicitly authori
 
 ### 9.0 R&D-only activation decision — 2026-10-17
 
-**Decision:** `ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY)`, effective on `integration` only after the clean baseline-promotion PR from `infra/ci-updates` is merged under ruleset `25306960`.
+**Decision:** `ACTIVE FOR EXPERIMENTAL MERGES (R&D ONLY)`, effective on `integration` only after the clean baseline-promotion PR from `infra/ci-updates` is merged under ruleset `25306960`. See [R_AND_D_EXPERIMENTAL_MERGE_ACTIVATION_RECORD.md](R_AND_D_EXPERIMENTAL_MERGE_ACTIVATION_RECORD.md) for the bounded authorization and residual-risk disposition.
 
 The prior validation authorization is superseded only for the narrow scope below. The first promotion PR transfers CI/security infrastructure and evidence records; it does not merge Stage 3 architecture, runtime implementation, protocol changes, or release artifacts.
 
@@ -231,10 +231,10 @@ Residual constraints explicitly retained: (a) the repository's final licensing/l
 - [x] CodeQL severity-threshold rule configured and read back in ruleset `25306960`: `security_alerts_threshold = high_or_higher`, `alerts_threshold = none`, tool `CodeQL`.
 - [x] CodeQL merge-protection behavior observed on validation PR #15: CodeQL reported one `critical` `py/code-injection` alert, the GitHub Advanced Security `CodeQL` check failed, and the PR API state was `mergeable_state = blocked`; the PR was closed without merging. This is API-observed blocking evidence; no separate screenshot of the GUI Merge button was captured.
 - [x] Synthetic-artifact SLSA provenance flow documented and independently verified on a separate GitHub-hosted runner: [run 39051752235](https://github.com/vaidt/Kt-ry-Program/actions/runs/39051752235). The signer workflow, source ref and commit, SLSA v1 predicate, certificate repository identity, Rekor timestamp, and SHA-256 subject digest were checked; a modified subject was rejected. See [ATTESTATION_VALIDATION_RECORD.md](ATTESTATION_VALIDATION_RECORD.md). This applies only to the synthetic R&D artifact; production/release artifacts remain unvalidated.
-- [x] Future-ref ruleset read back: ruleset [25306960](https://github.com/vaidt/Kt-ry-Program/rules/25306960) targets only `refs/heads/integration`, has no bypass actors, blocks deletion and force pushes, requires pull requests and resolved conversations, and requires all seven CI/security status checks.
+- [x] Effective integration ruleset read back on 2026-10-17: [ruleset 25306960](https://github.com/vaidt/Kt-ry-Program/rules/25306960) enforcement `active`, target `refs/heads/integration`, no bypass actors, `current_user_can_bypass = never`, strict required status checks, deletion/force-push blocked, PR and resolved conversations required, all seven CI/security contexts required. CodeQL `security_alerts_threshold = high_or_higher`, `alerts_threshold = none`; negative-control PR #15 returned `mergeable_state = blocked` on a critical `py/code-injection` finding.
 - [x] `main` protection read back on 2026-10-17; `protected = true`, `enforce_admins = true`, one required approval, and its original four required checks remain unchanged.
 - [x] Control evidence locations, responsible owner, risk expiry/review date, and review cadence recorded in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md).
-- [x] Scope boundary and prohibited claims published in this policy.
+- [x] Scope boundary, residual risks, and prohibited claims published in this policy and [R&D-only activation record](R_AND_D_EXPERIMENTAL_MERGE_ACTIVATION_RECORD.md).
 
 ### 9.1 Validation execution record — 2026-10-17
 
