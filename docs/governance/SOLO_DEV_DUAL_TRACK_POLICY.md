@@ -1,21 +1,21 @@
 # Solo-Developer Dual-Track Governance Policy
 
 **Document ID:** ASIG-GOV-DT-001  
-**Version:** 0.1 (proposal)  
-**Status:** PROPOSED · NOT RATIFIED · NOT EFFECTIVE  
-**Repository scope:** `vaidt/Kt-ry-Program` (ASIG engineering controls)  
-**Proposed path:** `docs/governance/SOLO_DEV_DUAL_TRACK_POLICY.md`  
-**Proposal date:** 2026-10-17  
-**Normative effect:** NONE  
-**Implementation authorization:** NOT GRANTED
+**Version:** 0.1  
+**Status:** RATIFIED FOR PREPARATION ONLY · NOT ACTIVE FOR INTEGRATION  
+**Repository scope:** `vaidt/Kt-ry-Program` (ASIG engineering controls only)  
+**Policy record:** [PR #12 operational decision](https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660)  
+**Decision date:** 2026-10-17  
+**Normative effect:** NONE ON AURA PROTOCOL; repository-level operational effect is limited to CI/security-infrastructure preparation  
+**Implementation authorization:** LIMITED — isolated CI/security-infrastructure preparation only; `integration` activation NOT AUTHORIZED
 
-> This document is a proposal for review. Its presence in a branch or pull request does not adopt the policy, create an `integration` branch, change GitHub rules, close CAPA NC-ASIG-2026-10-17-PR10, authorize runtime work, or modify AURA Protocol semantics.
+> The repository owner recorded limited operational ratification for implementation preparation in PR #12. This does not activate `integration`, change GitHub protection settings, close CAPA NC-ASIG-2026-10-17-PR10, authorize runtime work, or modify AURA Protocol semantics. Experimental merges on `integration` remain prohibited until the activation checklist below is satisfied and its controls have been verified.
 
 ## 1. Purpose and decision requested
 
 Define a controlled dual-track workflow for a repository operated by a solo developer, while preserving `main` as the authoritative integration and release boundary.
 
-The proposal permits limited research and development on an isolated `integration` branch only after this policy is formally adopted and the branch-specific controls described here are implemented and verified. It does not permit `integration` to become an alternate authoritative branch.
+The recorded decision adopts this policy only as authorization to prepare CI/security infrastructure. The `integration` branch is not yet authorized for experimental merges. Activation requires the verified controls and completed checklist in Section 9; `integration` must never become an alternate authoritative branch.
 
 The decision requested from the competent repository/governance authority is whether to adopt this policy, reject it, or return it for changes. Adoption must be recorded separately from this proposal.
 
@@ -200,8 +200,8 @@ The PR #11 exception record, if merged in accordance with its explicitly authori
 
 ## 9. Activation checklist — do not activate until every item is evidenced
 
-- [ ] Authorized decision-maker and policy adoption record identified.
-- [ ] Policy reviewed and ratified; effective version and effective date recorded.
+- [x] Repository-owner decision and limited policy-ratification record identified: PR #12 comment https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660.
+- [x] Policy ratified for infrastructure preparation only on 2026-10-17. This does not authorize integration merges; all remaining activation controls are still required.
 - [ ] CAPA status and its relationship to this policy explicitly recorded; no automatic closure inferred.
 - [ ] `integration` branch created from an identified base SHA only after ratification.
 - [ ] CI triggers verified for pull requests and for any permitted push-based development workflow.
@@ -217,7 +217,7 @@ An unchecked item means activation status is `BLOCKED`.
 
 ## 10. Change control, review, and effectiveness
 
-This proposal becomes effective only after a competent authority records explicit approval and the activation checklist is satisfied. The GitHub merge of this document alone is not sufficient evidence of adoption if the approving authority or required governance procedure is not established.
+The repository owner recorded a limited operational decision in PR #12 on 2026-10-17 authorizing preparation of CI/security infrastructure. That decision has repo-level effect for preparation only; it does not activate the `integration` track. The policy becomes operational for experimental merges only after the remaining activation checklist is evidenced, the branch-specific controls are configured and read back, and the authority's scope is recorded. A merge of this document alone is not proof that activation has occurred.
 
 Changes to this policy require a pull request, a change rationale, a risk assessment, evidence of the previous effective version, and the appropriate review. Changes that affect `main` protection, release qualification, AURA Protocol semantics, or normative authority require the separate applicable authorization; this document cannot supply it.
 
@@ -225,9 +225,9 @@ Review the policy after a security incident, material change to repository workf
 
 ## 11. Status summary
 
-| Item | Status at proposal time |
+| Item | Status at decision time |
 |---|---|
-| This policy | PROPOSED / NOT RATIFIED / NOT EFFECTIVE |
+| This policy | RATIFIED FOR PREPARATION ONLY / INTEGRATION NOT ACTIVE |
 | `main` protection | Must remain unchanged; verify live configuration before activation |
 | `integration` branch | NOT CREATED by this proposal |
 | Additional SAST / secret / dependency scanners | Proposed; not evidenced as active in current `ci.yml` |
@@ -237,4 +237,4 @@ Review the policy after a security incident, material change to repository workf
 
 ---
 
-**End of proposal.** This document defines an intended control contract for review; it is not an execution record or evidence that any GitHub setting has been changed.
+**End of policy.** This document records limited authorization for infrastructure preparation. It is not evidence that any scanner or GitHub setting has been configured, and it does not authorize experimental merges on `integration`.
