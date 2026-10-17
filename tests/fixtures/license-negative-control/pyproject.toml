@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asig-license-negative-control-fixture"
+version = "0.0.1"
+description = "Synthetic metadata fixture for ASIG license-policy validation; not for distribution."
+requires-python = ">=3.11"
+license = "GPL-3.0-only"
+classifiers = [
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
