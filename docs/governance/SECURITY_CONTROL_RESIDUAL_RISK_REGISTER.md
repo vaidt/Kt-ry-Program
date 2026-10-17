@@ -62,8 +62,8 @@ A repository ruleset was created and read back on 2026-10-17:
 | Test-only control | `pip-licenses==5.5.5`, machine-readable `.github/license-policy.json`, and `scripts/check_license_policy.py`. GPL-2.0/GPL-3.0/AGPL-3.0 families are blocked in validation only; LGPL/MPL, missing metadata, and unknown/unrecognized labels fail closed for manual review. The current policy excludes `aura-source-identity-gate` from scanner inventory so the undecided repository license does not self-trigger the test gate. |
 | Residual limitation | This test covers one synthetic GPLv3 label and the required status blocking behavior. It does not prove comprehensive license-expression normalization, source-file scanning for license texts, runtime/deployment license obligations, or a legal determination. The blocklist requires separate final review before any production use. |
 | Status | NEGATIVE-CONTROL TECHNICAL TEST PASS; FINAL LICENSE POLICY / LEGAL DISPOSITION OPEN; VALIDATION ONLY. |
-| Prohibited use | Do not claim repository licensing has been settled, do not change `UPSTREAM_AND_LICENSE.md` on this basis, and do not activate experimental merges or Stage 3. |
-| Review / expiry | Reassess before any promotion request to `main` or proposal to activate experimental merges; include legal/licensing review by the responsible authority. |
+| Prohibited use | Do not claim repository licensing has been settled or change `UPSTREAM_AND_LICENSE.md` on this basis. This validation-only control does not authorize production/release promotion, Stage 3, or AURA conformance; it does not negate the separately recorded bounded R&D activation. |
+| Review / expiry | Reassess before any promotion request to `main`, before production/release use, after a material licensing-policy change, and by the applicable review date; include legal/licensing review by the responsible authority. |
 
 
 ## RISK-ASIG-SLSA-001 — Synthetic artifact provenance passed; release-artifact provenance remains unvalidated
@@ -76,7 +76,7 @@ A repository ruleset was created and read back on 2026-10-17:
 | PR / cleanup | PR #18 closed without merge, `merged = false`, `merged_at = null`; prior API `mergeable_state = clean` is recorded and is not represented as a merge-blocking result. Branch ref deleted; REST lookup returned 404 and branch inventory had no matching ref. `integration` and `main` were not changed by this test. |
 | Residual limitation | Only the synthetic tarball is covered. No normal ASIG sdist/wheel/release artifact was verified in this exercise. The seven-day evidence artifacts are temporary; key digest, identity and outcome details are preserved in the validation record. The run does not establish SLSA Build Level 3 or prove source-code correctness. |
 | Status | SYNTHETIC-ARTIFACT TECHNICAL VALIDATION PASS; PRODUCT/RELEASE PROVENANCE OPEN; VALIDATION ONLY. |
-| Prohibited use | Do not claim production provenance coverage, source correctness, AURA conformance, or approval for experimental merges. Do not use this test to alter the authority boundary or change the governing status. |
+| Prohibited use | Do not claim production provenance coverage for actual release artifacts, source correctness, AURA conformance, or production/release approval. Do not use this synthetic test to alter the authority boundary or change the governing status. It does not replace the independently evidenced R&D activation record. |
 | Review / expiry | Before any promotion or activation request, attest the exact normal build artifacts, verify them out of band under the required workflow identity and source constraints, and capture durable evidence of each actual output digest. |
 
 ## Activation constraints
@@ -89,5 +89,5 @@ This register alone does not satisfy the policy activation checklist. Following 
 - positive/negative control tests and the remaining operational requirements in `SOLO_DEV_DUAL_TRACK_POLICY.md` must remain evidenced;
 - `main` was re-read as protected with its four existing required checks unchanged. The current GitHub App connection could not independently read the classic `enforce_admins` property (API returned 403); do not treat that property as verified by this record. Any claim about that specific setting requires a read path with the necessary administration permission.
 
-**End of register.** The Dependency Review exception is bounded to non-authoritative R&D. The license negative-control and synthetic SLSA artifact-provenance validations technically passed, but final license-policy/legal disposition and provenance verification for actual release artifacts remain open. The separate CodeQL alert-enforcement gap described above and the remaining activation controls continue to block experimental merges.
+**End of register.** The Dependency Review exception is bounded to non-authoritative R&D. The license negative-control and synthetic SLSA artifact-provenance validations technically passed, but final license-policy/legal disposition and provenance verification for actual release artifacts remain open. CodeQL threshold enforcement was validated by the negative-control PR; broader residual risks remain open and continue to block any release/promotion or stronger-assurance claim. They do not revoke the separately evidenced, bounded R&D-only activation of `integration`.
 
