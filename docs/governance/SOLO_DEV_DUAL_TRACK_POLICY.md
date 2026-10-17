@@ -15,7 +15,7 @@
 
 Define a controlled dual-track workflow for a repository operated by a solo developer, while preserving `main` as the authoritative integration and release boundary.
 
-The recorded decision adopts this policy for infrastructure preparation and a strictly bounded validation phase. The `integration` branch may be created only at the exact SHA stated in Section 9, for validation-control PRs only; it is not authorized for experimental merges. Activation requires the verified controls and completed checklist in Section 9; `integration` must never become an alternate authoritative branch. Dependency-vulnerability negative-control coverage is now evidenced, but cleanup of the new retained test ref, dedicated license-negative-control coverage, and applicable artifact-attestation verification remain open.
+The recorded decision adopts this policy for infrastructure preparation and a strictly bounded validation phase. The `integration` branch may be created only at the exact SHA stated in Section 9, for validation-control PRs only; it is not authorized for experimental merges. Activation requires the verified controls and completed checklist in Section 9; `integration` must never become an alternate authoritative branch. Dependency-vulnerability and license-policy negative-control coverage are now evidenced; the temporary validation refs were deleted after evidence capture. Applicable artifact-attestation verification remains open.
 
 The decision requested from the competent repository/governance authority is whether to adopt this policy, reject it, or return it for changes. Adoption must be recorded separately from this proposal.
 
@@ -221,7 +221,7 @@ No experimental code, including Stage 3 architecture, may be merged to `integrat
 - [x] Required status-check names and provider captured and read back in ruleset ID `25306960`; check contexts are bound to GitHub Actions app ID `15368`.
 - [x] CodeQL/GitHub Advanced Security and Gitleaks positive/negative control behavior tested; evidence and scope are recorded in §9.1.
 - [x] Dependency-vulnerability negative control completed through isolated PR #16; see §9.2. The required `python-dependency-audit` check detected known vulnerabilities in the pinned test dependency and failed as expected; the PR was blocked and closed without merging.
-- [ ] Dedicated/applicable license-scanner negative-control coverage remains outstanding; no dedicated license-scan control was evidenced.
+- [x] License-policy negative control completed through isolated PR #17; see [LICENSE_POLICY_VALIDATION_RECORD.md](LICENSE_POLICY_VALIDATION_RECORD.md). The required `python-dependency-audit` context failed on an explicit synthetic GPLv3 label, the PR was API-observed as blocked, closed without merge, and its source ref was deleted and verified absent.
 - [x] Removed the three earlier retained ABANDONED validation refs through normal authorized repository administration, then reran the full-history Gitleaks scan successfully. [ASIG Security Controls run 39047435796](https://github.com/vaidt/Kt-ry-Program/actions/runs/39047435796) completed `success` on `infra/ci-updates` at SHA `5ac7ab4af75258e51d39a4b3b5ee358e5cc72192`; both `secret-scan` and `Scan full Git history (redacted)` passed. The earlier failure is retained as historical evidence below, not current status.
 - [x] Deleted the test branch ref `validation/pip-audit-negative-control` at SHA `32bfb0e0d7a1d4d00f43bdabf07681101b080f7e` after preserving PR #16 and workflow evidence. After the authorized GitHub CLI DELETE request, a subsequent GitHub REST GET returned `404 Not Found`; a follow-up branch search returned no result for the validation ref. No vulnerable dependency change was merged.
 - [x] CodeQL severity-threshold rule configured and read back in ruleset `25306960`: `security_alerts_threshold = high_or_higher`, `alerts_threshold = none`, tool `CodeQL`.
@@ -246,7 +246,7 @@ The validation PRs were closed on 2026-10-17. Closing a PR is not the same as de
 
 **Historical finding — full-history Gitleaks was blocked by a retained test ref.** On documentation-evidence commit `7fc39a93490ee1e6edd67ba1bb632699d081b3b3`, `ASIG CI` run [39046279758](https://github.com/vaidt/Kt-ry-Program/actions/runs/39046279758) succeeded. `ASIG Security Controls` run [39046279773](https://github.com/vaidt/Kt-ry-Program/actions/runs/39046279773) failed because the full-history step found the synthetic `aws-access-token` fixture on `validation/gitleaks-negative-control`. This is preserved as historical evidence; the former blocker was subsequently resolved by deleting the three old validation refs and obtaining a clean post-cleanup scan as recorded below. No allowlist or suppression was introduced.
 
-The controls recorded in §§9.1–9.2 support only the specific findings stated. The dependency-vulnerability negative control is now evidenced; dedicated license-scanner negative-control coverage and the applicable artifact-attestation verification path remain incomplete.
+The controls recorded in §§9.1–9.3 support only the specific findings stated. The dependency-vulnerability and license-policy negative controls are now evidenced; the applicable artifact-attestation verification path remains incomplete.
 
 ### 9.2 Dependency negative control — 2026-10-17
 
@@ -265,11 +265,26 @@ An isolated negative-control PR targeted `integration` from `validation/pip-audi
 
 The source ref `validation/pip-audit-negative-control` at tested head `32bfb0e0d7a1d4d00f43bdabf07681101b080f7e` was deleted after evidence capture. The subsequent GitHub REST GET returned `404 Not Found`, and a follow-up branch search returned no matching validation ref. The ref cleanup is recorded COMPLETE based on this API read-back; this does not imply purging historical Git objects or close any other activation gate. No vulnerable package change was merged to `integration` or `main`.
 
+
+### 9.3 License policy negative control — 2026-10-17
+
+See the detailed, preserved evidence in [LICENSE_POLICY_VALIDATION_RECORD.md](LICENSE_POLICY_VALIDATION_RECORD.md). The final isolated test used head `11564648914309b95f7d30d5340ba90be496816f` against base `integration` at `487e63069d18d2ab3f289131e9a5427f0cc61116`.
+
+| Control | Evidence | Outcome |
+|---|---|---|
+| Clean implementation baseline | [ASIG Security Controls run 39050669832](https://github.com/vaidt/Kt-ry-Program/actions/runs/39050669832) on infrastructure baseline `a00702d2ef28aeefd621bf58ae858d20678d74a7` | SUCCESS; policy and scanner execute without the synthetic prohibited-license fixture. |
+| Negative control, synthetic GPLv3 dependency metadata | [PR #17](https://github.com/vaidt/Kt-ry-Program/pull/17); [ASIG CI run 39050856515](https://github.com/vaidt/Kt-ry-Program/actions/runs/39050856515); [ASIG Security Controls run 39050856436](https://github.com/vaidt/Kt-ry-Program/actions/runs/39050856436) | CI SUCCESS; required `python-dependency-audit` FAILURE at `Enforce validation-only license policy`, emitting `LICENSE_POLICY_BANNED` for `GNU General Public License v3 (GPLv3)`; CodeQL and secret-scan SUCCESS. Before closure, PR API reported `mergeable_state = blocked`. CLOSED WITHOUT MERGE. |
+| Test-ref cleanup | PR #17 closed with `merged = false`, `merged_at = null`; REST ref lookup returned HTTP 404 and the branch inventory contained no matching `validation/license-negative-control` ref. | Cleanup complete; no fixture merged to `integration` or `main`. |
+
+The earlier PR head `8b962c33d35fa2767b189a22db3e61906a902931` is excluded from negative-control evidence because fixture packaging failed before the scanner ran. Only the final run that produced an explicit `LICENSE_POLICY_BANNED` result is counted.
+
+The policy remains **VALIDATION ONLY**. It does not determine the repository's final license, revise `UPSTREAM_AND_LICENSE.md`, or establish a legal license-compliance conclusion. Applicable artifact-attestation verification remains an open activation item.
+
 An unchecked item means activation status is `BLOCKED`.
 
 ## 10. Change control, review, and effectiveness
 
-The repository owner recorded limited operational authorization for infrastructure preparation in PR #12; the subsequent validation authorization permitted only the controls recorded in §9.1. These validation results do not activate the `integration` track for experimental merges. The policy becomes operational for experimental merges only after every activation checklist item, including dedicated license-negative-control coverage and applicable artifact-attestation verification, is evidenced and the authorization scope is separately recorded. A successful CI run or a documentation commit alone is not proof that activation has occurred.
+The repository owner recorded limited operational authorization for infrastructure preparation in PR #12; the subsequent validation authorization permitted only the controls recorded in §9.1. These validation results do not activate the `integration` track for experimental merges. The policy becomes operational for experimental merges only after every activation checklist item, including applicable artifact-attestation verification, is evidenced and the authorization scope is separately recorded. A successful CI run or a documentation commit alone is not proof that activation has occurred.
 
 Changes to this policy require a pull request, a change rationale, a risk assessment, evidence of the previous effective version, and the appropriate review. Changes that affect `main` protection, release qualification, AURA Protocol semantics, or normative authority require the separate applicable authorization; this document cannot supply it.
 
@@ -279,12 +294,12 @@ Review the policy after a security incident, material change to repository workf
 
 | Item | Status at decision time |
 |---|---|
-| This policy | RATIFIED FOR PREPARATION AND VALIDATION ONLY / EXPERIMENTAL MERGES BLOCKED — DEPENDENCY/LICENSE NEGATIVE CONTROLS AND ARTIFACT-ATTESTATION VALIDATION REMAIN OPEN |
+| This policy | RATIFIED FOR PREPARATION AND VALIDATION ONLY / EXPERIMENTAL MERGES BLOCKED — DEPENDENCY AND LICENSE NEGATIVE CONTROLS EVIDENCED; ARTIFACT-ATTESTATION VALIDATION REMAINS OPEN |
 | `main` protection | Read back 2026-10-17 and unchanged: protected, admin enforcement true, one required approval, original four required CI contexts |
 | `integration` branch | Created and still at `487e63069d18d2ab3f289131e9a5427f0cc61116`; protected by ruleset 25306960; validation-only, experimental merges blocked |
 | CI and security evidence checkpoint | [ASIG CI run 39046385384](https://github.com/vaidt/Kt-ry-Program/actions/runs/39046385384) and post-cleanup [ASIG Security Controls run 39047435796](https://github.com/vaidt/Kt-ry-Program/actions/runs/39047435796) passed on `infra/ci-updates` SHA `5ac7ab4af75258e51d39a4b3b5ee358e5cc72192`; §9.1 records the earlier failed scan and its subsequent resolution. |
 | CodeQL | Ruleset 25306960 has `security_alerts_threshold = high_or_higher`; PR #15 returned one critical `py/code-injection` finding, a failing GitHub Advanced Security `CodeQL` check, and API-observed `blocked` mergeability. See §9.1; no test PR merged. |
-| Gitleaks | Post-cleanup full-history scan [run 39047435796](https://github.com/vaidt/Kt-ry-Program/actions/runs/39047435796) passed, including the `Scan full Git history (redacted)` step. The three prior validation refs were absent at read-back. The later pip-audit negative-control ref was also deleted after its evidence was preserved; the subsequent REST GET returned `404 Not Found`. |
+| Gitleaks | Post-cleanup full-history scan [run 39047435796](https://github.com/vaidt/Kt-ry-Program/actions/runs/39047435796) passed, including the `Scan full Git history (redacted)` step. The three prior validation refs were absent at read-back. The later pip-audit negative-control ref was also deleted after its evidence was preserved; the subsequent REST GET returned `404 Not Found`. License-test ref `validation/license-negative-control` was likewise deleted after PR #17 evidence capture and verified absent by REST 404 and branch inventory. |
 | Python dependency audit | Baseline audit in [run 39047435796](https://github.com/vaidt/Kt-ry-Program/actions/runs/39047435796) passed. Negative-control PR #16 caused the required audit to fail with 18 known findings for `urllib3==1.26.15`; PR was blocked and closed without merging. See §9.2. |
 | Integration ruleset | Active, ID `25306960`, targeted only to `refs/heads/integration`; verified by read-back. No bypass actors. The branch exists at the authorized validation baseline and remains restricted to validation; experimental merges are not authorized. |
 | Dedicated Dependency Review | Absent; temporary R&D-only residual risk in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md) |
@@ -294,4 +309,4 @@ Review the policy after a security incident, material change to repository workf
 
 ---
 
-**End of policy.** The positive control and the CodeQL, Gitleaks, and dependency-vulnerability negative controls have produced the results recorded in §§9.1–9.2; all validation PRs were closed without merging. The three original validation refs were deleted, and post-cleanup full-history Gitleaks passed in run 39047435796. The pip-audit test ref at SHA `32bfb0e0d7a1d4d00f43bdabf07681101b080f7e` was deleted after evidence capture; the post-delete GitHub REST GET returned `404 Not Found` and a follow-up branch search returned no matching validation ref. The current status remains **NOT ACTIVE FOR EXPERIMENTAL MERGES** because test-ref cleanup, dedicated license-negative-control coverage, and applicable R&D artifact-attestation verification remain open. `main` and `integration` were not changed by the test PR; Stage 3 remains unauthorized by this policy.
+**End of policy.** The positive control and the CodeQL, Gitleaks, and dependency-vulnerability negative controls have produced the results recorded in §§9.1–9.2; all validation PRs were closed without merging. The three original validation refs were deleted, and post-cleanup full-history Gitleaks passed in run 39047435796. The pip-audit test ref at SHA `32bfb0e0d7a1d4d00f43bdabf07681101b080f7e` was deleted after evidence capture; the post-delete GitHub REST GET returned `404 Not Found` and a follow-up branch search returned no matching validation ref. The current status remains **NOT ACTIVE FOR EXPERIMENTAL MERGES** because applicable R&D artifact-attestation verification remains open. `main` and `integration` were not changed by the test PR; Stage 3 remains unauthorized by this policy.
