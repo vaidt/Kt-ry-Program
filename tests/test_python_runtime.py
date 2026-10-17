@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import tempfile
 import unittest
@@ -36,7 +37,7 @@ class PythonRuntimeTests(unittest.TestCase):
             root.mkdir()
             manifest = self._workspace(root)
             manifest_path = base / "manifest.json"
-            manifest_path.write_text(__import__("json").dumps(manifest), encoding="utf-8")
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             receipt = run_python(
                 root,
                 ["python", "-m", "pytest", "-q", "test_probe.py"],
@@ -57,7 +58,7 @@ class PythonRuntimeTests(unittest.TestCase):
             root.mkdir()
             manifest = self._workspace(root, alternate=True)
             manifest_path = base / "manifest.json"
-            manifest_path.write_text(__import__("json").dumps(manifest), encoding="utf-8")
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             receipt = run_python(
                 root,
                 ["python", "-m", "pytest", "-q", "test_probe.py"],
@@ -77,7 +78,7 @@ class PythonRuntimeTests(unittest.TestCase):
             root.mkdir()
             manifest = self._workspace(root)
             manifest_path = base / "manifest.json"
-            manifest_path.write_text(__import__("json").dumps(manifest), encoding="utf-8")
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             receipt = run_python(
                 root,
                 ["python", "-m", "pytest", "-q", "test_probe.py"],
