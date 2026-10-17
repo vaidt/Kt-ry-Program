@@ -153,6 +153,7 @@ def _runtime_python(args: argparse.Namespace) -> int:
             required_test_ids=args.required_test_id,
             timeout_seconds=args.timeout,
             output_path=Path(args.output),
+            manifest_path=Path(args.manifest) if args.manifest else None,
         )
     except (OSError, ValueError) as exc:
         _emit({"qualification_status": "BLOCKED", "error": str(exc)})
@@ -168,6 +169,7 @@ def _runtime_node(args: argparse.Namespace) -> int:
             Path(args.root), command, _parse_mapping(args.specifier, "specifier"),
             timeout_seconds=args.timeout,
             output_path=Path(args.output),
+            manifest_path=Path(args.manifest) if args.manifest else None,
         )
     except (OSError, ValueError) as exc:
         _emit({"qualification_status": "BLOCKED", "error": str(exc)})
@@ -184,6 +186,7 @@ def _runtime_rust(args: argparse.Namespace) -> int:
             required_test_ids=args.required_test_id,
             timeout_seconds=args.timeout,
             output_path=Path(args.output),
+            manifest_path=Path(args.manifest) if args.manifest else None,
         )
     except (OSError, ValueError) as exc:
         _emit({"qualification_status": "BLOCKED", "error": str(exc)})
@@ -236,6 +239,7 @@ def build_parser() -> argparse.ArgumentParser:
     py_run.add_argument("--required-test-id", action="append", default=[], help="required pytest node ID; repeatable")
     py_run.add_argument("--timeout", type=float, default=120.0)
     py_run.add_argument("--output", required=True, help="receipt path outside target repository")
+    py_run.add_argument("--manifest", default=None, help="baseline source manifest captured outside target repository")
     py_run.add_argument("command_argv", nargs=argparse.REMAINDER, help="command to execute after --")
     py_run.set_defaults(func=_runtime_python)
 
@@ -244,6 +248,7 @@ def build_parser() -> argparse.ArgumentParser:
     node_run.add_argument("--specifier", action="append", default=[], metavar="SPECIFIER=RELATIVE_PATH", help="module specifier mapping; repeatable")
     node_run.add_argument("--timeout", type=float, default=120.0)
     node_run.add_argument("--output", required=True, help="receipt path outside target repository")
+    node_run.add_argument("--manifest", default=None, help="baseline source manifest captured outside target repository")
     node_run.add_argument("command_argv", nargs=argparse.REMAINDER, help="command to execute after --")
     node_run.set_defaults(func=_runtime_node)
 
@@ -252,6 +257,7 @@ def build_parser() -> argparse.ArgumentParser:
     rust_run.add_argument("--required-test-id", action="append", default=[], help="expected Rust test name; repeatable")
     rust_run.add_argument("--timeout", type=float, default=600.0)
     rust_run.add_argument("--output", required=True, help="receipt path outside target repository")
+    rust_run.add_argument("--manifest", default=None, help="baseline source manifest captured outside target repository")
     rust_run.add_argument("command_argv", nargs=argparse.REMAINDER, help="command to execute after --")
     rust_run.set_defaults(func=_runtime_rust)
 
