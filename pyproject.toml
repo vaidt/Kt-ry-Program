@@ -16,3 +16,6 @@ aura-source-identity = "aura_source_identity.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"aura_source_identity.runtime" = ["*.cjs", "*.mjs"]
