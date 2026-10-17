@@ -6,6 +6,14 @@ from typing import Any
 from .canonical import object_sha256
 
 
+def _is_sha256(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
 def qualify_evidence(evidence: Any, manifest_verification: dict[str, Any]) -> dict[str, Any]:
     """Evaluate evidence without converting unknown or incomplete proof to PASS."""
     failures: list[str] = []
@@ -24,8 +32,10 @@ def qualify_evidence(evidence: Any, manifest_verification: dict[str, Any]) -> di
     manifest_hash = manifest_verification.get("manifest_sha256")
     expected_manifest_hash = evidence.get("expected_manifest_sha256")
     manifest_status = manifest_verification.get("status")
-    if not isinstance(expected_manifest_hash, str) or not expected_manifest_hash:
-        blockers.append("expected_manifest_sha256 is missing")
+    if not _is_sha256(expected_manifest_hash):
+        blockers.append("expected_manifest_sha256 must be a lowercase SHA-256 digest")
+    elif not _is_sha256(manifest_hash):
+        blockers.append("verified manifest digest is unavailable")
     elif expected_manifest_hash != manifest_hash:
         failures.append("evidence points to a different source manifest")
     if manifest_status == "MISMATCH":
@@ -56,8 +66,8 @@ def qualify_evidence(evidence: Any, manifest_verification: dict[str, Any]) -> di
 
     expected_tests_hash = test_plan.get("expected_test_source_sha256")
     observed_tests_hash = test_plan.get("observed_test_source_sha256")
-    if not isinstance(expected_tests_hash, str) or not expected_tests_hash or not isinstance(observed_tests_hash, str) or not observed_tests_hash:
-        blockers.append("expected/observed test source hashes are missing")
+    if not _is_sha256(expected_tests_hash) or not _is_sha256(observed_tests_hash):
+        blockers.append("expected/observed test source hashes must be lowercase SHA-256 digests")
     elif expected_tests_hash != observed_tests_hash:
         failures.append("test source changed between planned and observed execution")
 
@@ -94,8 +104,8 @@ def qualify_evidence(evidence: Any, manifest_verification: dict[str, Any]) -> di
         blockers.append("independent evaluation is not PASS")
     delivered_hash = independent.get("delivered_artifact_sha256")
     tested_hash = independent.get("tested_artifact_sha256")
-    if not isinstance(delivered_hash, str) or not delivered_hash or not isinstance(tested_hash, str) or not tested_hash:
-        blockers.append("delivered/tested artifact hashes are missing")
+    if not _is_sha256(delivered_hash) or not _is_sha256(tested_hash):
+        blockers.append("delivered/tested artifact hashes must be lowercase SHA-256 digests")
     elif delivered_hash != tested_hash:
         failures.append("independent evaluator tested a different artifact")
 
