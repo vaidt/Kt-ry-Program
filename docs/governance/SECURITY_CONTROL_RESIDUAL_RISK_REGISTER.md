@@ -65,6 +65,20 @@ A repository ruleset was created and read back on 2026-10-17:
 | Prohibited use | Do not claim repository licensing has been settled, do not change `UPSTREAM_AND_LICENSE.md` on this basis, and do not activate experimental merges or Stage 3. |
 | Review / expiry | Reassess before any promotion request to `main` or proposal to activate experimental merges; include legal/licensing review by the responsible authority. |
 
+
+## RISK-ASIG-SLSA-001 — Synthetic artifact provenance passed; release-artifact provenance remains unvalidated
+
+| Field | Decision |
+|---|---|
+| Risk statement | A signed provenance flow was validated for a synthetic test archive. This does not prove that ASIG's actual sdist, wheel, release package, or deployed artifact is built and attested through the same constrained workflow. |
+| Validation evidence | [Attestation validation record](ATTESTATION_VALIDATION_RECORD.md); isolated [PR #18](https://github.com/vaidt/Kt-ry-Program/pull/18), tested head `b2e7f1b72a80b0140649c0236eabbc051e925ab5`; [ASIG SLSA Attestation Validation run 39051752235](https://github.com/vaidt/Kt-ry-Program/actions/runs/39051752235) SUCCESS, both build-and-attest and separate-runner verification jobs SUCCESS. |
+| Cryptographic checks | `gh version 2.102.0`; `gh attestation verify` exit 0 with repo, signer workflow, source digest/ref, and SLSA v1 predicate constrained. Certificate source repository ID `1423292837`, owner ID `321871992`, OIDC issuer `https://token.actions.githubusercontent.com`, Sigstore certificate issuer `CN=sigstore-intermediate,O=sigstore.dev`, one verified Rekor timestamp. Local and attested subject SHA-256 both equal `1483325b7a4fd3829bd347222101002b54a07a70a62d66ae6316682df0cec9d9`. A modified copy was rejected by CLI verification (exit 1, no attestation for altered digest). |
+| PR / cleanup | PR #18 closed without merge, `merged = false`, `merged_at = null`; prior API `mergeable_state = clean` is recorded and is not represented as a merge-blocking result. Branch ref deleted; REST lookup returned 404 and branch inventory had no matching ref. `integration` and `main` were not changed by this test. |
+| Residual limitation | Only the synthetic tarball is covered. No normal ASIG sdist/wheel/release artifact was verified in this exercise. The seven-day evidence artifacts are temporary; key digest, identity and outcome details are preserved in the validation record. The run does not establish SLSA Build Level 3 or prove source-code correctness. |
+| Status | SYNTHETIC-ARTIFACT TECHNICAL VALIDATION PASS; PRODUCT/RELEASE PROVENANCE OPEN; VALIDATION ONLY. |
+| Prohibited use | Do not claim production provenance coverage, source correctness, AURA conformance, or approval for experimental merges. Do not use this test to alter the authority boundary or change the governing status. |
+| Review / expiry | Before any promotion or activation request, attest the exact normal build artifacts, verify them out of band under the required workflow identity and source constraints, and capture durable evidence of each actual output digest. |
+
 ## Activation constraints
 
 This register alone does not satisfy the policy activation checklist. Before `integration` becomes available for experimental merges:
@@ -75,5 +89,5 @@ This register alone does not satisfy the policy activation checklist. Before `in
 - positive/negative control tests and the remaining activation requirements in `SOLO_DEV_DUAL_TRACK_POLICY.md` must be evidenced;
 - `main` branch protection and `enforce_admins = true` must remain unchanged and be independently read back.
 
-**End of register.** The Dependency Review exception is bounded to non-authoritative R&D. The license negative-control technically passed, but final license-policy/legal disposition and applicable artifact-attestation verification remain open. The separate CodeQL alert-enforcement gap described above and the remaining activation controls continue to block experimental merges.
+**End of register.** The Dependency Review exception is bounded to non-authoritative R&D. The license negative-control and synthetic SLSA artifact-provenance validations technically passed, but final license-policy/legal disposition and provenance verification for actual release artifacts remain open. The separate CodeQL alert-enforcement gap described above and the remaining activation controls continue to block experimental merges.
 
