@@ -4,8 +4,12 @@ on:
   push:
     branches:
       - security/gitleaks-isolated-negative-control
-    paths:
-      - .github/workflows/gitleaks-isolated-negative-control.yml
+      - main
+      - integration
+  pull_request:
+    branches:
+      - main
+      - integration
   workflow_dispatch:
 
 permissions:
