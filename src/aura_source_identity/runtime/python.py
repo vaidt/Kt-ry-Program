@@ -152,7 +152,7 @@ def run_python(
         "runtime": "python",
         "run_id": env["ASIG_RUN_ID"],
         "source_snapshot": source_snapshot,
-        "command": command_result,
+        "command": command_receipt,
         "module_identity": {
             "status": identity_status,
             "expected_modules": sorted(expected),
