@@ -44,6 +44,8 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
 def run_process(argv: list[str], cwd: Path, env: dict[str, str], timeout: float) -> dict[str, Any]:
     if not argv or any(not isinstance(item, str) or not item for item in argv):
         raise ValueError("command must be a non-empty argv list of non-empty strings")
+    if not isinstance(timeout, (int, float)) or isinstance(timeout, bool) or timeout <= 0 or timeout != timeout:
+        raise ValueError("timeout must be a positive finite number")
     started = time.monotonic()
     process = subprocess.Popen(
         argv,
