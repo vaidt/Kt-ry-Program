@@ -94,14 +94,6 @@ def run_python(
             pass
     snapshot_after = verify_manifest_binding(root, manifest_path)
     source_snapshot = combine_snapshot_checks(snapshot_before, snapshot_after)
-    if os.environ.get("ASIG_DEBUG_RUNTIME_TESTS") == "1" and command_result["exit_code"] != 0:
-        print("ASIG_RUNTIME_DEBUG " + json.dumps({
-            "exit_code": command_result["exit_code"],
-            "stdout": (command_result.get("stdout") or "")[-3000:],
-            "stderr": (command_result.get("stderr") or "")[-3000:],
-            "runtime_log": read_jsonl(runtime_log),
-            "test_log": read_jsonl(test_log),
-        }, ensure_ascii=False, sort_keys=True))
     module_records = [row for row in read_jsonl(runtime_log) if row.get("event") in {"module", "module_unobservable"}]
     process_records = [row for row in read_jsonl(runtime_log) if row.get("event") in {"process_start", "process_end", "observer_error", "observer_bootstrap_error"}]
     test_records = [row for row in read_jsonl(test_log) if row.get("event") == "test_result"]
