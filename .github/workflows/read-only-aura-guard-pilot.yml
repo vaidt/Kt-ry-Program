@@ -8,6 +8,7 @@ on:
       - "src/sitecustomize.py"
       - "pyproject.toml"
       - ".github/workflows/read-only-aura-guard-pilot.yml"
+      - "docs/PILOT_EVIDENCE_VERIFICATION.md"
   schedule:
     - cron: "17 4 * * 1"
   workflow_dispatch:
@@ -24,6 +25,9 @@ jobs:
       id-token: write
       attestations: write
       artifact-metadata: write
+    env:
+      EXPECTED_TARGET_COMMIT: 7d2f5746ae61a66edcd11d75bff0787bed854363
+      TARGET_REPOSITORY: vaidt/Aura-Guard
     steps:
       - name: Checkout ASIG auditor
         uses: actions/checkout@v4
@@ -39,57 +43,179 @@ jobs:
       - name: Install ASIG
         run: python -m pip install .
 
-      - name: Checkout Aura-Guard read-only
+      - name: Checkout pinned Aura-Guard source without stored credentials
         uses: actions/checkout@v4
         with:
           repository: vaidt/Aura-Guard
-          ref: main
+          ref: 7d2f5746ae61a66edcd11d75bff0787bed854363
           path: targets/Aura-Guard
           fetch-depth: 1
           persist-credentials: false
           submodules: false
 
-      - name: Capture and verify read-only source inventory
+      - name: Make target checkout non-writable and assert commit identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GIT_OPTIONAL_LOCKS=0
+          actual_commit="$(git -C targets/Aura-Guard rev-parse HEAD)"
+          test "$actual_commit" = "$EXPECTED_TARGET_COMMIT"
+          test -z "$(git -C targets/Aura-Guard status --porcelain --untracked-files=all)"
+          chmod -R a-w targets/Aura-Guard
+          test "$(git -C targets/Aura-Guard rev-parse HEAD)" = "$EXPECTED_TARGET_COMMIT"
+          echo "Target commit pinned: $actual_commit"
+
+      - name: Capture and verify read-only source inventory outside target checkout
+        id: inventory
+        shell: bash
         env:
-          TARGET_REPOSITORY: vaidt/Aura-Guard
-          TARGET_REF: refs/heads/main
+          TARGET_REF: 7d2f5746ae61a66edcd11d75bff0787bed854363
           MANIFEST_PATH: ${{ runner.temp }}/asig-aura-guard-source-manifest.json
           RECEIPT_PATH: ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
         run: |
           set -euo pipefail
+          export GIT_OPTIONAL_LOCKS=0
           aura-source-identity audit \
             --root targets/Aura-Guard \
             --repository "$TARGET_REPOSITORY" \
             --source-ref "$TARGET_REF" \
             --manifest-output "$MANIFEST_PATH" \
             --output "$RECEIPT_PATH"
+
           python - <<'PY'
-          import json, os, pathlib, sys
-          receipt = json.loads(pathlib.Path(os.environ["RECEIPT_PATH"]).read_text(encoding="utf-8"))
+          import json, os, pathlib
+          from aura_source_identity.canonical import object_sha256
+
+          manifest_path = pathlib.Path(os.environ["MANIFEST_PATH"])
+          receipt_path = pathlib.Path(os.environ["RECEIPT_PATH"])
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+          expected_commit = os.environ["EXPECTED_TARGET_COMMIT"]
           assert receipt["audit_status"] == "PASS", receipt
           assert receipt["target"]["repository"] == "vaidt/Aura-Guard"
+          assert receipt["target"]["requested_ref"] == expected_commit
+          assert receipt["target"]["commit_sha"] == expected_commit
+          assert manifest["git"]["commit_sha"] == expected_commit
+          assert receipt["target"]["tree_sha"] == manifest["git"]["tree_sha"]
+          assert manifest["git"]["working_tree_clean"] is True
+          assert receipt["source_identity_verification"]["status"] == "EXACT_MATCH"
           assert receipt["protocol_conformance_claimed"] is False
           assert receipt["runtime_tests_executed"] is False
-          from aura_source_identity.canonical import object_sha256
           body = dict(receipt)
-          claimed = body.pop("receipt_sha256")
-          assert object_sha256(body) == claimed, "receipt self-digest mismatch"
+          claimed_digest = body.pop("receipt_sha256")
+          assert object_sha256(body) == claimed_digest, "receipt self-digest mismatch"
           assert len(receipt["source_inventory"]["manifest_sha256"]) == 64
-          print("ASIG read-only source inventory PASS")
-          print("target commit:", receipt["target"]["commit_sha"])
-          print("manifest sha256:", receipt["source_inventory"]["manifest_sha256"])
-          PY
-          sha256sum "$MANIFEST_PATH" "$RECEIPT_PATH" > "${{ runner.temp }}/asig-aura-guard-checksums.txt"
+          assert receipt["source_inventory"]["manifest_sha256"] == manifest["manifest_sha256"]
 
-      - name: Generate signed provenance attestation for the receipt
+          import subprocess
+          target_root = pathlib.Path("targets/Aura-Guard")
+          post_commit = subprocess.check_output(
+              ["git", "-C", str(target_root), "rev-parse", "HEAD"], text=True
+          ).strip()
+          post_status = subprocess.check_output(
+              ["git", "-C", str(target_root), "status", "--porcelain", "--untracked-files=all"],
+              text=True
+          )
+          assert post_commit == expected_commit
+          assert not post_status, f"target checkout changed during inventory: {post_status!r}"
+
+          context = {
+              "schema_version": 1,
+              "kind": "ASIG_AURA_GUARD_PILOT_CONTEXT",
+              "target_repository": "vaidt/Aura-Guard",
+              "target_commit_sha": expected_commit,
+              "target_tree_sha": manifest["git"]["tree_sha"],
+              "source_manifest_sha256": manifest["manifest_sha256"],
+              "receipt_sha256": claimed_digest,
+              "asig_repository": os.environ["GITHUB_REPOSITORY"],
+              "asig_repository_id": "1423292837",
+              "asig_workflow": os.environ["GITHUB_WORKFLOW"],
+              "asig_workflow_ref": os.environ["GITHUB_REF"],
+              "asig_workflow_commit": os.environ["GITHUB_SHA"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "observed_at_utc": receipt["observed_at_utc"],
+              "audit_status": receipt["audit_status"],
+              "runtime_tests_executed": False,
+              "protocol_conformance_claimed": False,
+          }
+          context_path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "asig-aura-guard-pilot-context.json"
+          context_path.write_text(
+              json.dumps(context, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print("ASIG read-only source inventory PASS")
+          print("target commit:", expected_commit)
+          print("target tree:", manifest["git"]["tree_sha"])
+          print("manifest digest:", manifest["manifest_sha256"])
+          print("receipt digest:", claimed_digest)
+          PY
+
+      - name: Package immutable evidence set
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          sha256sum \
+            asig-aura-guard-source-manifest.json \
+            asig-aura-guard-read-only-receipt.json \
+            asig-aura-guard-pilot-context.json \
+            > asig-aura-guard-SHA256SUMS.txt
+          sha256sum -c asig-aura-guard-SHA256SUMS.txt
+          tar -czf asig-aura-guard-evidence.tar.gz \
+            asig-aura-guard-source-manifest.json \
+            asig-aura-guard-read-only-receipt.json \
+            asig-aura-guard-pilot-context.json \
+            asig-aura-guard-SHA256SUMS.txt
+          echo "archive_path=$RUNNER_TEMP/asig-aura-guard-evidence.tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Attest the complete evidence archive
         id: attest
         uses: actions/attest@v4
         with:
-          subject-path: ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
-          predicate-type: https://github.com/vaidt/Kt-ry-Program/attestations/asig-read-only-source-audit/v1
-          predicate-path: ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
+          subject-path: ${{ runner.temp }}/asig-aura-guard-evidence.tar.gz
 
-      - name: Upload source manifest, receipt, checksums, and attestation bundle
+      - name: Verify signature, timestamp, repository, and signer workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+          EVIDENCE_ARCHIVE: ${{ steps.package.outputs.archive_path }}
+          EXPECTED_ASIG_SHA: ${{ github.sha }}
+          EXPECTED_ASIG_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          test -s "$BUNDLE_PATH"
+          test -s "$EVIDENCE_ARCHIVE"
+          gh attestation verify "$EVIDENCE_ARCHIVE" \
+            --repo vaidt/Kt-ry-Program \
+            --bundle "$BUNDLE_PATH" \
+            --signer-workflow "vaidt/Kt-ry-Program/.github/workflows/read-only-aura-guard-pilot.yml" \
+            --source-digest "$EXPECTED_ASIG_SHA" \
+            --source-ref "$EXPECTED_ASIG_REF" \
+            --format json > "$RUNNER_TEMP/asig-aura-guard-attestation-verification.json"
+          python - <<'PY'
+          import json, os, pathlib
+          results = json.loads(
+              (pathlib.Path(os.environ["RUNNER_TEMP"]) / "asig-aura-guard-attestation-verification.json")
+              .read_text(encoding="utf-8")
+          )
+          assert isinstance(results, list) and results, "attestation verifier returned no verified statements"
+          for item in results:
+              verification = item.get("verificationResult", {})
+              certificate = verification.get("signature", {}).get("certificate", {})
+              timestamps = verification.get("verifiedTimestamps")
+              assert certificate, "verified signer certificate is absent"
+              assert str(certificate.get("sourceRepositoryIdentifier", "")) == "1423292837", certificate
+              assert timestamps, "no cryptographically verified timestamp was returned"
+          print("Attestation cryptographic verification PASS")
+          print("ASIG signer repository ID:", "1423292837")
+          print("Verified statements:", len(results))
+          PY
+
+      - name: Upload pilot evidence package
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -97,7 +223,10 @@ jobs:
           path: |
             ${{ runner.temp }}/asig-aura-guard-source-manifest.json
             ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
-            ${{ runner.temp }}/asig-aura-guard-checksums.txt
+            ${{ runner.temp }}/asig-aura-guard-pilot-context.json
+            ${{ runner.temp }}/asig-aura-guard-SHA256SUMS.txt
+            ${{ runner.temp }}/asig-aura-guard-evidence.tar.gz
+            ${{ runner.temp }}/asig-aura-guard-attestation-verification.json
             ${{ steps.attest.outputs.bundle-path }}
           if-no-files-found: warn
           retention-days: 90
