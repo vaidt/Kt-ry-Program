@@ -58,7 +58,7 @@ def _tracked_paths(root: Path) -> list[str] | None:
         return None
     if proc.returncode != 0:
         return None
-    return [item.decode("utf-8", errors="surrogateescape") for item in proc.stdout.split(b"\\0") if item]
+    return [item.decode("utf-8", errors="surrogateescape") for item in proc.stdout.split(b"\0") if item]
 
 
 def _excluded(relative: str, excluded_names: set[str], excluded_paths: set[str]) -> bool:
