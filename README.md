@@ -1,65 +1,90 @@
 # Który Program — AURA Source Identity Gate
 
-**ASIG MVP 0.1.0 · Engineering preview · Not a protocol certification tool**
+**ASIG 0.2.0 · Engineering preview · Not a protocol certification tool**
 
 Kt-ry-Program develops an independent source-identity and test-evidence gate for AURA engineering workflows.
 
-The core question is simple: do the preserved test results refer to the exact source tree and delivery artifact that are being presented for review? ASIG compares a deterministic source inventory with the current Git checkout and checks supplied test evidence for complete test IDs, test-source hash consistency, explicit outcomes, and independent evaluation of the delivered artifact.
+ASIG separates three different claims: **which source was observed**, **which tests actually reported results**, and **whether the resulting evidence is sufficient to qualify a delivery**. Missing observations do not become PASS.
 
 ## Current capabilities
 
-- Capture a sorted SHA-256 inventory of repository files and symbolic links.
-- Bind the manifest to the Git commit SHA, tree SHA, and working-tree cleanliness.
-- Verify manifest integrity and compare the current checkout to the captured inventory.
-- Qualify evidence as PASS, FAIL, or BLOCKED without treating missing evidence as success.
-- Emit JSON reports with a digest that permits tamper detection of the report content.
-- Run unit tests on Python 3.11, 3.12, and 3.13 in GitHub Actions.
-- Build Python wheel/source distributions and attach them to a GitHub Release when a version tag is pushed.
+- Capture a sorted SHA-256 inventory of Git-tracked files and symbolic links.
+- Bind a manifest to the Git commit SHA, tree SHA, and clean-worktree status.
+- Verify manifest integrity and compare the current checkout against the captured inventory.
+- Qualify supplied test evidence with `PASS`, `FAIL`, or `BLOCKED`.
+- **Python adapter:** instrument explicitly mapped filesystem-backed `.py` imports, capture pytest call results, and compare observed test node IDs to the required set.
+- **Node adapter:** instrument explicitly mapped CommonJS `require()` and ESM imports and compare loaded source bytes to the expected file.
+- **Rust/Cargo adapter:** capture command outcome, selected toolchain versions, and critical Cargo/toolchain file digests. It explicitly reports `BUILD_CONTEXT_ONLY` because it does not observe loaded machine-code instructions.
+- Generate a read-only source inventory receipt for another repository.
+- GitHub Actions workflow to sign the Aura-Guard read-only receipt using GitHub Artifact Attestations.
+- CI matrix for Python 3.11, 3.12, 3.13; Node 22 adapter tests; schema parsing; package compilation and distribution builds.
 
 ## Quick start
 
 Requires Python 3.11+ and Git.
 
-Install from a checkout using `python -m pip install .`.
+Install from a checkout:
 
-Capture a clean checkout manifest; keep the output outside the repository being measured:
+`python -m pip install .`
+
+Capture a clean source manifest; write the manifest outside the measured repository:
 
 `aura-source-identity capture --root . --repository vaidt/Kt-ry-Program --output ../asig-manifest.json`
 
-Verify it later against the same checkout:
+Verify it:
 
 `aura-source-identity verify --root . --manifest ../asig-manifest.json`
 
-Qualify a test-evidence document against that manifest:
+Qualify supplied test evidence:
 
 `aura-source-identity qualify --root . --manifest ../asig-manifest.json --evidence ../asig-evidence.json --output ../asig-qualification.json`
 
-The capture command exits non-zero when the working tree is not clean. Verification returns EXACT_MATCH only when the manifest integrity, inventory, commit, Git tree, and clean-checkout requirements are satisfied.
+## Runtime adapters
 
-## Qualification rules
+Python example; required pytest node IDs must come from the approved test plan:
 
-- **PASS** requires an exact verified source identity, a complete test plan whose executed IDs equal the required IDs, passing results for each required test, unchanged test-source hashes, and an independent evaluation of the same delivery artifact hash.
-- **FAIL** means a concrete mismatch or mandatory test/evaluation failure was observed.
-- **BLOCKED** means the evidence is missing, incomplete, unsupported, or unknown.
+`aura-source-identity runtime-python --root . --module package.rules=package/rules.py --required-test-id public_tests/test_public.py::test_example --output ../asig-python-receipt.json -- python -m pytest -q public_tests`
 
-FAIL dominates BLOCKED. Neither missing evidence nor an unknown observation can become PASS.
+Node example; mappings are exact module specifier strings and expected paths:
 
-See [the evidence schema](schemas/source-identity-evidence.schema.json), [the manifest schema](schemas/source-identity-manifest.schema.json), [architecture](docs/ARCHITECTURE.md), and [the threat model](docs/THREAT_MODEL.md).
+`aura-source-identity runtime-node --root . --specifier ./verification.js=frontend/src/lib/verification.js --output ../asig-node-receipt.json -- node run-a-test-command.js`
 
-## AURA integration boundary
+Rust example:
 
-ASIG is a repository/build/test engineering control. It does not replace Aura-Guard's Conformance Core, does not modify normative Aura Protocol semantics, and does not certify an implementation as Aura-conformant.
+`aura-source-identity runtime-rust --root . --required-test-id module::test_name --output ../asig-rust-receipt.json -- cargo test --locked`
 
-MVP 0.1 checks the repository inventory and qualifies supplied test evidence. It does **not yet** instrument live imports or runtime module resolution in Python, Node.js, or Rust; nor does it authenticate an external CI attestation. These are explicit future milestones, not current guarantees.
+**Status semantics:** Python can return `PASS` only when every configured module is observed as an exact path/content match and the observed pytest node IDs exactly match the required set with all tests passing. Node records source identity but currently leaves overall qualification `BLOCKED` because there is no runner-specific test-completeness adapter yet. Rust records build context only and deliberately leaves qualification `BLOCKED` on a passing command. A non-zero command or confirmed source mismatch is `FAIL`.
 
-The proposed integration path for Aura-Guard and RI-PY / RI-RS is documented in [AURA Adoption Map](docs/AURA_ADOPTION_MAP.md). Repository-specific authorization and architecture review are required before making ASIG a mandatory gate in other AURA repositories.
+## Read-only Aura-Guard pilot
 
-## Upstream relationship
+The workflow [read-only-aura-guard-pilot.yml](.github/workflows/read-only-aura-guard-pilot.yml) checks out `vaidt/Aura-Guard` with `persist-credentials: false`, creates the manifest and receipt outside the target checkout, and generates a signed GitHub Artifact Attestation for the receipt. It runs on schedule, manual dispatch from `main`, and changes to ASIG’s relevant source/workflow paths.
 
-This is a clean-room implementation informed by the engineering concepts documented in [down-shift/which-program](https://github.com/down-shift/which-program). No upstream source files were copied. The upstream licensing status and the licensing status of this repository are documented in [UPSTREAM_AND_LICENSE.md](docs/UPSTREAM_AND_LICENSE.md). Do not assume that this repository is open-source licensed or publish it to a public package index under an assumed license.
+The current pilot is **source inventory only**. It does not run Aura-Guard tests and does not claim protocol conformance or runtime identity.
+
+After the Aura-Guard pilot has a successful, reviewable receipt, the planned next phase adds separate read-only inventories and controlled adapter executions for RI-PY (`vaidt/aura-poc-a-core-v3.3`) and RI-RS (`vaidt/aura-guard-v1.3`). Those targets remain outside this stage’s changes.
+
+## Verify an attestation
+
+After downloading the receipt artifact from GitHub Actions, verify it with GitHub CLI:
+
+`gh attestation verify asig-aura-guard-read-only-receipt.json --repo vaidt/Kt-ry-Program --signer-workflow vaidt/Kt-ry-Program/.github/workflows/read-only-aura-guard-pilot.yml --predicate-type https://github.com/vaidt/Kt-ry-Program/attestations/asig-read-only-source-audit/v1`
+
+This verifies the artifact attestation’s signature and configured signer identity. The signed receipt proves which read-only source snapshot the ASIG workflow recorded; it is not an attestation that the target repository’s code is correct or Aura-conformant.
+
+See [CI Attestations](docs/CI_ATTESTATIONS.md), [Runtime Adapters](docs/RUNTIME_ADAPTERS.md), [the read-only receipt schema](schemas/read-only-source-audit-receipt.schema.json), [architecture](docs/ARCHITECTURE.md), [the threat model](docs/THREAT_MODEL.md), and [the AURA adoption map](docs/AURA_ADOPTION_MAP.md).
+
+## Integration boundary
+
+ASIG is an engineering control. It does not replace Aura-Guard’s Conformance Core, does not modify normative Aura Protocol semantics, and does not certify an implementation as Aura-conformant.
+
+Runtime observation is cooperative and scoped to the explicitly configured modules/specifiers. It is not a hostile-process security boundary and does not prove every loaded library, custom loader, native extension, dynamic evaluation, or operating-system instruction. No target runtime integration should become a required release gate until the relevant adapter is validated with mutation tests and approved governance.
+
+## Upstream relationship and licensing
+
+This is an independent implementation informed by public design material from [down-shift/which-program](https://github.com/down-shift/which-program). No upstream source files were copied. The upstream licensing status and the licensing status of this repository are documented in [UPSTREAM_AND_LICENSE.md](docs/UPSTREAM_AND_LICENSE.md). Do not assume this repository is open-source licensed or publish it to a public package index under an assumed license.
 
 ## Development
 
-Run the test suite with `python -m unittest discover -s tests -v`. The CI pipeline also compiles the package and builds wheel/source distributions.
+Run tests with `python -m unittest discover -s tests -v`. CI compiles the package, validates JSON files, runs the tests on supported Python versions, tests Node adapters under Node 22, and builds wheel/source distributions.
 
-**Current status:** feature branch implementation; review and CI acceptance required before merge to `main`.
+**Current status:** second-stage feature branch; CI and read-only pilot receipt must be reviewed before RI-PY/RI-RS rollout.
