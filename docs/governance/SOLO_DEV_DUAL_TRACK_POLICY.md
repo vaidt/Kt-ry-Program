@@ -209,30 +209,45 @@ The PR #11 exception record, if merged in accordance with its explicitly authori
 1. Create `integration` at exactly `487e63069d18d2ab3f289131e9a5427f0cc61116`.
 2. Create an isolated positive-control PR with a harmless change and separate negative-control PRs for CodeQL and Gitleaks. The negative controls must remain isolated to their own temporary branches and must not be merged.
 3. Capture the exact head SHAs, workflow run URLs, required status-check conclusions, CodeQL alert details, ruleset evaluation evidence, and observed mergeability/merge-block state.
-4. Close every validation PR without merging and delete its temporary source branch. Keep `integration` free of test vectors; do not merge the negative-control files.
+4. Close every validation PR without merging and attempt to delete its temporary source branch. If deletion cannot be completed through the authorized interface, record the ref as ABANDONED, not eligible for reuse or merge, and keep `integration` free of test vectors.
 
 No experimental code, including Stage 3 architecture, may be merged to `integration` until all activation checklist items are satisfied and separately verified. This validation authorization does not permit changes to `main`, does not waive required `main` review, and does not activate runtime or protocol-conformance work.
 
 - [x] Repository-owner decision and limited policy-ratification record identified: PR #12 comment https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660.
 - [x] Policy ratified for infrastructure preparation only on 2026-10-17. This does not authorize integration merges; all remaining activation controls are still required.
 - [x] CAPA status and relationship are documented as a separate, unresolved record; no automatic closure is inferred.
-- [ ] `integration` branch created at the authorized exact base SHA `487e63069d18d2ab3f289131e9a5427f0cc61116`; creation is validation-only and does not enable experimental merges.
-- [ ] CI triggers verified for pull requests and for any permitted push-based development workflow on the target ref.
+- [x] `integration` branch created at the authorized exact base SHA `487e63069d18d2ab3f289131e9a5427f0cc61116`; the ref remains at that baseline and creation is validation-only.
+- [x] CI push and pull-request triggers verified for the validation ref: baseline runs and validation PRs invoked the expected workflows; exact run evidence is recorded in §9.1.
 - [x] Required status-check names and provider captured and read back in ruleset ID `25306960`; check contexts are bound to GitHub Actions app ID `15368`.
-- [ ] SAST, dependency, secret, and applicable license scanners tested with positive and negative controls.
+- [x] CodeQL/GitHub Advanced Security and Gitleaks positive/negative control behavior tested; evidence and scope are recorded in §9.1.
+- [ ] Dependency and applicable license-scanner negative controls remain outstanding. `python-dependency-audit` passed on the tested heads, but no negative dependency-vulnerability control was run; no dedicated license-scan control was evidenced.
 - [x] CodeQL severity-threshold rule configured and read back in ruleset `25306960`: `security_alerts_threshold = high_or_higher`, `alerts_threshold = none`, tool `CodeQL`.
-- [ ] End-to-end CodeQL merge-enforcement behavior validated after `integration` exists and CodeQL results are attached to that ref. Configuration read-back alone is not a behavior test; a successful `codeql` job alone does not prove that findings are below threshold.
+- [x] CodeQL merge-protection behavior observed on validation PR #15: CodeQL reported one `critical` `py/code-injection` alert, the GitHub Advanced Security `CodeQL` check failed, and the PR API state was `mergeable_state = blocked`; the PR was closed without merging. This is API-observed blocking evidence; no separate screenshot of the GUI Merge button was captured.
 - [ ] Attestation verification identity, workflow, predicate, artifact digest, and retention rules documented and tested for the applicable R&D artifact flow.
 - [x] Future-ref ruleset read back: ruleset [25306960](https://github.com/vaidt/Kt-ry-Program/rules/25306960) targets only `refs/heads/integration`, has no bypass actors, blocks deletion and force pushes, requires pull requests and resolved conversations, and requires all seven CI/security status checks.
 - [x] `main` protection read back on 2026-10-17; `protected = true`, `enforce_admins = true`, one required approval, and its original four required checks remain unchanged.
 - [x] Control evidence locations, responsible owner, risk expiry/review date, and review cadence recorded in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md).
 - [x] Scope boundary and prohibited claims published in this policy.
 
+### 9.1 Validation execution record — 2026-10-17
+
+Validation controls were executed against PRs targeting `integration`. All three PRs were closed without merging. The exact results follow.
+
+| Control | Source head SHA | Evidence | Outcome |
+|---|---|---|---|
+| Positive control, harmless Markdown-only change | `a7694f4eef26dc9bc819bfd3ab7662a2f6f6dfdf` | [PR #13](https://github.com/vaidt/Kt-ry-Program/pull/13); [ASIG CI run 39045542805](https://github.com/vaidt/Kt-ry-Program/actions/runs/39045542805); [Security run 39045542806](https://github.com/vaidt/Kt-ry-Program/actions/runs/39045542806) | Both workflows passed; PR API reported `mergeable_state = clean` before closure. CLOSED WITHOUT MERGE. |
+| Negative control, CodeQL code injection | `8e218086eca8bcb38066ea260cbcd4e1a4c9abb7` | [PR #15](https://github.com/vaidt/Kt-ry-Program/pull/15); [CodeQL alert/check](https://github.com/vaidt/Kt-ry-Program/runs/117433561414); [Security workflow 39045543039](https://github.com/vaidt/Kt-ry-Program/actions/runs/39045543039) | Alert `py/code-injection`, severity `critical`; GitHub Advanced Security `CodeQL` check failed; PR API state was `blocked`. The Actions job named `codeql` also completed successfully because the analysis/upload job itself ran to completion. CLOSED WITHOUT MERGE. |
+| Negative control, Gitleaks synthetic AWS-shaped value | `7afaafe0243577b4870a9ac217d33f305eb136b1` | [PR #14](https://github.com/vaidt/Kt-ry-Program/pull/14); [Security workflow 39045696827](https://github.com/vaidt/Kt-ry-Program/actions/runs/39045696827); [secret-scan job](https://github.com/vaidt/Kt-ry-Program/actions/runs/39045696827/job/117433852344) | Rule `aws-access-token` found one test-only match; `secret-scan` failed; the Security workflow failed as expected; PR API state was `blocked`. The earlier invalid fixture on SHA `99bc0c5af98fc92e7575be45a42abe0c61c6b70d` was not counted as a successful negative control. CLOSED WITHOUT MERGE. |
+
+The validation PRs were closed on 2026-10-17. Closing a PR is not the same as deleting its source ref. The following refs were still present on the last branch inventory: `validation/positive-control` at `a7694f4eef26dc9bc819bfd3ab7662a2f6f6dfdf`; `validation/codeql-negative-control` at `8e218086eca8bcb38066ea260cbcd4e1a4c9abb7`; and `validation/gitleaks-negative-control` at `7afaafe0243577b4870a9ac217d33f305eb136b1`. An attempt to delete these refs was blocked by the available action interface's safety control. The underlying reason was not established; this is not evidence that a GitHub organization or repository rule forbids deletion. Their documented disposition is **ABANDONED — RETAINED, DO NOT REUSE, DO NOT MERGE** pending normal authorized deletion by a repository operator. No test fixture was merged to `integration` or `main`.
+
+The three controls support the specific findings above. They do not establish that every dependency/license scanner has passed negative controls or that the applicable artifact-attestation verification path is complete.
+
 An unchecked item means activation status is `BLOCKED`.
 
 ## 10. Change control, review, and effectiveness
 
-The repository owner recorded a limited operational decision in PR #12 on 2026-10-17 authorizing preparation of CI/security infrastructure. That decision has repo-level effect for preparation only; it does not activate the `integration` track. The policy becomes operational for experimental merges only after the remaining activation checklist is evidenced, the branch-specific controls are configured and read back, and the authority's scope is recorded. A merge of this document alone is not proof that activation has occurred.
+The repository owner recorded limited operational authorization for infrastructure preparation in PR #12; the subsequent validation authorization permitted only the controls recorded in §9.1. These validation results do not activate the `integration` track for experimental merges. The policy becomes operational for experimental merges only after every activation checklist item, including the applicable dependency/license negative controls and artifact-attestation verification, is evidenced and the authorization scope is separately recorded. A successful CI run or a documentation commit alone is not proof that activation has occurred.
 
 Changes to this policy require a pull request, a change rationale, a risk assessment, evidence of the previous effective version, and the appropriate review. Changes that affect `main` protection, release qualification, AURA Protocol semantics, or normative authority require the separate applicable authorization; this document cannot supply it.
 
@@ -242,14 +257,14 @@ Review the policy after a security incident, material change to repository workf
 
 | Item | Status at decision time |
 |---|---|
-| This policy | RATIFIED FOR PREPARATION AND VALIDATION ONLY / EXPERIMENTAL MERGES NOT AUTHORIZED |
+| This policy | RATIFIED FOR PREPARATION AND VALIDATION ONLY / EXPERIMENTAL MERGES BLOCKED — DEPENDENCY/LICENSE NEGATIVE CONTROLS AND ARTIFACT-ATTESTATION VALIDATION REMAIN OPEN |
 | `main` protection | Read back 2026-10-17 and unchanged: protected, admin enforcement true, one required approval, original four required CI contexts |
-| `integration` branch | Authorized for validation-only creation at `487e63069d18d2ab3f289131e9a5427f0cc61116`; experimental merges remain prohibited until all checklist gates pass |
-| CI and security evidence checkpoint | `ASIG CI` run [39043855839](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043855839) and `ASIG Security Controls` run [39043855790](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043855790) succeeded on commit `7f5562747b264304a615ab8d1277bf15e49d32a8` |
-| CodeQL | Analysis successful; scanned 22/22 Python files, 5/5 workflow files and 2/2 JavaScript files; SARIF upload completed. Ruleset 25306960 now configures `security_alerts_threshold = high_or_higher`; behavior validation on the actual `integration` ref remains open |
+| `integration` branch | Created and still at `487e63069d18d2ab3f289131e9a5427f0cc61116`; protected by ruleset 25306960; validation-only, experimental merges blocked |
+| CI and security evidence checkpoint | Latest infrastructure-policy commit before this evidence update `a46f65783a01ac6b66f6380094b88f995a348b96` passed [ASIG CI 39045446099](https://github.com/vaidt/Kt-ry-Program/actions/runs/39045446099) and [Security Controls 39045446082](https://github.com/vaidt/Kt-ry-Program/actions/runs/39045446082). Validation results are enumerated in §9.1. |
+| CodeQL | Ruleset 25306960 has `security_alerts_threshold = high_or_higher`; PR #15 returned one critical `py/code-injection` finding, a failing GitHub Advanced Security `CodeQL` check, and API-observed `blocked` mergeability. See §9.1; no test PR merged. |
 | Gitleaks | Push-diff scan found no leaks; redacted full-history scan on the cited evidence checkpoint scanned 132 commits / ~442.56 KB and found no leaks |
 | Python dependency audit | `pip-audit . --strict` returned `No known vulnerabilities found` on the cited evidence checkpoint |
-| Integration ruleset | Active, ID `25306960`, targeted only to `refs/heads/integration`; verified by read-back. No bypass actors. The branch itself remains absent |
+| Integration ruleset | Active, ID `25306960`, targeted only to `refs/heads/integration`; verified by read-back. No bypass actors. The branch exists at the authorized validation baseline and remains restricted to validation; experimental merges are not authorized. |
 | Dedicated Dependency Review | Absent; temporary R&D-only residual risk in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md) |
 | Sigstore | Read-only source-inventory attestation exists; this is not a general build attestation |
 | CAPA NC-ASIG-2026-10-17-PR10 | Separate and open; not closed by this policy |
@@ -257,4 +272,4 @@ Review the policy after a security incident, material change to repository workf
 
 ---
 
-**End of policy.** This document records limited authorization for infrastructure preparation and validation only. Successful scan jobs and ruleset read-back do not by themselves prove end-to-end merge blocking on `integration`. Validation PRs must be closed without merging; experimental merges remain unauthorized until every activation checklist gate is satisfied.
+**End of policy.** The CodeQL and Gitleaks negative controls and the clean positive control produced the results recorded in §9.1; all validation PRs were closed without merging. The three temporary source refs remain and are documented as ABANDONED pending normal authorized deletion. The current status remains **NOT ACTIVE FOR EXPERIMENTAL MERGES** because dependency/license negative-control coverage and the applicable R&D artifact-attestation verification are still outstanding. `main` was not changed, and Stage 3 remains unauthorized by this policy.
