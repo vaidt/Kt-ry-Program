@@ -45,6 +45,22 @@ def _working_tree_clean(root: Path) -> bool | None:
     return status == ""
 
 
+def _tracked_paths(root: Path) -> list[str] | None:
+    """Return Git-index paths when available; ignored local build outputs stay out of the source inventory."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--cached", "-z"],
+            check=False,
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    return [item.decode("utf-8", errors="surrogateescape") for item in proc.stdout.split(b"\\0") if item]
+
+
 def _excluded(relative: str, excluded_names: set[str], excluded_paths: set[str]) -> bool:
     posix = PurePosixPath(relative)
     if any(part in excluded_names for part in posix.parts):
@@ -68,10 +84,18 @@ def inventory_files(
     paths = {p.strip("/") for p in (exclude_paths or set()) if p.strip("/")}
     entries: list[dict[str, Any]] = []
 
-    for path in sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix()):
+    tracked = _tracked_paths(root)
+    if tracked is None:
+        candidates = sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix())
+    else:
+        candidates = [root / PurePosixPath(relative) for relative in sorted(tracked)]
+
+    for path in candidates:
         relative = path.relative_to(root).as_posix()
         if _excluded(relative, names, paths):
             continue
+        if not path.exists() and not path.is_symlink():
+            raise ManifestError(f"tracked source path is missing: {relative}")
         if path.is_symlink():
             target = os.readlink(path)
             entries.append({
