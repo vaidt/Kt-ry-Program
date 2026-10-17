@@ -204,16 +204,17 @@ The PR #11 exception record, if merged in accordance with its explicitly authori
 
 - [x] Repository-owner decision and limited policy-ratification record identified: PR #12 comment https://github.com/vaidt/Kt-ry-Program/pull/12#issuecomment-6235297660.
 - [x] Policy ratified for infrastructure preparation only on 2026-10-17. This does not authorize integration merges; all remaining activation controls are still required.
-- [ ] CAPA status and its relationship to this policy explicitly recorded; no automatic closure inferred.
-- [ ] `integration` branch created from an identified base SHA only after ratification.
-- [ ] CI triggers verified for pull requests and for any permitted push-based development workflow.
-- [ ] Required status-check names and providers captured from live GitHub configuration.
-- [ ] SAST, dependency, secret, and applicable license scanners configured and tested with positive/negative controls.
-- [ ] Attestation verification identity, workflow, predicate, artifact digest, and retention rules documented and tested.
-- [ ] Branch-specific rules read back from GitHub; force-push/deletion rules verified.
-- [ ] No change to `main` protection; `enforce_admins = true` and existing requirements re-verified.
-- [ ] Control evidence locations, responsible owners, exception expiry, and review cadence recorded.
-- [ ] Scope boundary and prohibited claims published to contributors.
+- [x] CAPA status and relationship are documented as a separate, unresolved record; no automatic closure is inferred.
+- [ ] `integration` branch created from an identified base SHA. No branch is created by the present preparation step.
+- [ ] CI triggers verified for pull requests and for any permitted push-based development workflow on the target ref.
+- [x] Required status-check names and provider captured and read back in ruleset ID `25306960`; check contexts are bound to GitHub Actions app ID `15368`.
+- [ ] SAST, dependency, secret, and applicable license scanners tested with positive and negative controls.
+- [ ] CodeQL severity-threshold enforcement configured as a `code_scanning` rule and read back for the `integration` ref. A successful `codeql` job alone does not prove that findings are below threshold.
+- [ ] Attestation verification identity, workflow, predicate, artifact digest, and retention rules documented and tested for the applicable R&D artifact flow.
+- [x] Future-ref ruleset read back: ruleset [25306960](https://github.com/vaidt/Kt-ry-Program/rules/25306960) targets only `refs/heads/integration`, has no bypass actors, blocks deletion and force pushes, requires pull requests and resolved conversations, and requires all seven CI/security status checks.
+- [x] `main` protection read back on 2026-10-17; `protected = true`, `enforce_admins = true`, one required approval, and its original four required checks remain unchanged.
+- [x] Control evidence locations, responsible owner, risk expiry/review date, and review cadence recorded in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md).
+- [x] Scope boundary and prohibited claims published in this policy.
 
 An unchecked item means activation status is `BLOCKED`.
 
@@ -229,14 +230,17 @@ Review the policy after a security incident, material change to repository workf
 
 | Item | Status at decision time |
 |---|---|
-| This policy | RATIFIED FOR PREPARATION ONLY / INTEGRATION NOT ACTIVE |
-| `main` protection | Must remain unchanged; verify live configuration before activation |
-| `integration` branch | NOT CREATED; activation blocked pending the full checklist |
-| Baseline CI | Verified successful on commit `fa5e4254f0770d37480e47033b2c3407fce9cf4b` |
-| CodeQL / Gitleaks / Python dependency audit | Workflow implemented on `infra/ci-updates`; prior run passed. Latest full-history scan on the updated workflow still requires a successful result on the new head |
-| Dedicated Dependency Review | Absent; temporary R&D-only residual risk recorded in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md) |
-| Sigstore | Current read-only source-inventory attestation exists; not a general build attestation |
-| CAPA NC-ASIG-2026-10-17-PR10 | Separate; not closed by this policy |
+| This policy | RATIFIED FOR INFRASTRUCTURE PREPARATION ONLY / INTEGRATION MERGES NOT AUTHORIZED |
+| `main` protection | Read back 2026-10-17 and unchanged: protected, admin enforcement true, one required approval, original four required CI contexts |
+| `integration` branch | NOT CREATED |
+| CI and security evidence checkpoint | `ASIG CI` run [39043353975](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043353975) and `ASIG Security Controls` run [39043353992](https://github.com/vaidt/Kt-ry-Program/actions/runs/39043353992) succeeded on commit `5dae7b275277c92dc6f0173e6e74948256b4f370` |
+| CodeQL | Analysis successful; scanned 22/22 Python files, 5/5 workflow files and 2/2 JavaScript files; SARIF upload completed. Alert-threshold enforcement remains a separate open activation item |
+| Gitleaks | Push-diff scan found no leaks; additional redacted full-history scan inspected 132 commits / ~435.86 KB and found no leaks on the cited evidence checkpoint |
+| Python dependency audit | `pip-audit . --strict` returned `No known vulnerabilities found` on the cited evidence checkpoint |
+| Integration ruleset | Active, ID `25306960`, targeted only to `refs/heads/integration`; verified by read-back. No bypass actors. The branch itself remains absent |
+| Dedicated Dependency Review | Absent; temporary R&D-only residual risk in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md) |
+| Sigstore | Read-only source-inventory attestation exists; this is not a general build attestation |
+| CAPA NC-ASIG-2026-10-17-PR10 | Separate and open; not closed by this policy |
 | Runtime qualification / AURA conformance | Not authorized by this policy |
 
 ---
