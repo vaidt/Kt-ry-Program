@@ -48,6 +48,7 @@ jobs:
         with:
           repository: vaidt/Aura-Guard
           ref: 7d2f5746ae61a66edcd11d75bff0787bed854363
+          token: ""
           path: targets/Aura-Guard
           fetch-depth: 1
           persist-credentials: false
@@ -102,6 +103,7 @@ jobs:
           assert receipt["source_identity_verification"]["status"] == "EXACT_MATCH"
           assert receipt["protocol_conformance_claimed"] is False
           assert receipt["runtime_tests_executed"] is False
+          assert receipt["runtime_identity_observed"] is False
           body = dict(receipt)
           claimed_digest = body.pop("receipt_sha256")
           assert object_sha256(body) == claimed_digest, "receipt self-digest mismatch"
@@ -124,6 +126,7 @@ jobs:
               "schema_version": 1,
               "kind": "ASIG_AURA_GUARD_PILOT_CONTEXT",
               "target_repository": "vaidt/Aura-Guard",
+              "target_repository_id": "1367018150",
               "target_commit_sha": expected_commit,
               "target_tree_sha": manifest["git"]["tree_sha"],
               "source_manifest_sha256": manifest["manifest_sha256"],
