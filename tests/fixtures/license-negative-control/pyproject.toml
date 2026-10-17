@@ -7,10 +7,10 @@ name = "asig-license-negative-control-fixture"
 version = "0.0.1"
 description = "Synthetic metadata fixture for ASIG license-policy validation; not for distribution."
 requires-python = ">=3.11"
-license = "GPL-3.0-only"
-classifiers = [
-  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-]
+# Use the legacy free-text License field deliberately for this synthetic
+# fixture: the scanner must reject the declared GPLv3 family without relying
+# on a classifier/PEP 639 metadata conflict during package build.
+license = { text = "GNU General Public License v3 (GPLv3)" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
