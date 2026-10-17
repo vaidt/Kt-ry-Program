@@ -94,6 +94,37 @@ def write_json(path: Path, value: Any) -> None:
         stream.write("\n")
 
 
+
+def verify_manifest_binding(root: Path, manifest_path: Path | None) -> dict[str, Any]:
+    """Verify a caller-supplied baseline before/after runtime execution."""
+    if manifest_path is None:
+        return {"status": "NOT_SUPPLIED", "manifest_sha256": None, "errors": ["no source manifest supplied"]}
+    try:
+        manifest_path = manifest_path.expanduser().resolve(strict=True)
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        from ..inventory import verify_manifest
+        result = verify_manifest(manifest, root)
+        result["manifest_sha256"] = manifest.get("manifest_sha256")
+        return result
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        return {"status": "UNKNOWN", "manifest_sha256": None, "errors": [str(exc)]}
+
+
+def combine_snapshot_checks(before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
+    """Require the same bound source state both before and after the run."""
+    if before.get("status") == "MISMATCH" or after.get("status") == "MISMATCH":
+        status = "MISMATCH"
+    elif before.get("status") == "EXACT_MATCH" and after.get("status") == "EXACT_MATCH" and before.get("manifest_sha256") == after.get("manifest_sha256"):
+        status = "EXACT_MATCH"
+    else:
+        status = "UNKNOWN"
+    return {
+        "status": status,
+        "manifest_sha256": before.get("manifest_sha256"),
+        "before": before,
+        "after": after,
+    }
+
 def add_receipt_digest(receipt: dict[str, Any], digest_fn) -> dict[str, Any]:
     body = dict(receipt)
     body.pop("receipt_sha256", None)
