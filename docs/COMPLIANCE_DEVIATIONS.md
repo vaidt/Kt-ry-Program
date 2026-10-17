@@ -10,7 +10,7 @@
 
 ### 1. Deviation statement
 
-PR #10 was merged without a recorded independent approving review. The GitHub pull-request API records the PR as merged at **2026-10-17 14:05:08 UTC**, with `merged_by = vaid t`? No: the account returned by GitHub is `vaidt`, and the submitted review list returned an empty array (`reviews: []`). The merge commit is `8b62cca211cd8969040aa90ac501db5fa6649bca`; the PR head commit was `27f276a812a5f0afb9de97276f605c45f5bb880c`, based on `0c50927f85bbee62cee84d0f099d1a220351daf0`.
+PR #10 was merged without a recorded independent approving review. The GitHub pull-request API records the PR as merged at **2026-10-17 14:05:08 UTC**, with `merged_by.login = vaidt`, and the submitted review list returned an empty array (`reviews: []`). The merge commit is `8b62cca211cd8969040aa90ac501db5fa6649bca`; the PR head commit was `27f276a812a5f0afb9de97276f605c45f5bb880c`, based on `0c50927f85bbee62cee84d0f099d1a220351daf0`.
 
 The change merged by PR #10 was limited to the documentation file `docs/REFERENCE_INVENTORY_EVIDENCE_VERIFICATION.md` (103 additions, 0 deletions); no runtime source code was changed by that PR.
 
