@@ -80,6 +80,22 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip
-          .venv/bin/python -m pip install --disable-pip-version-check . pip-audit==2.10.1
+          .venv/bin/python -m pip install --disable-pip-version-check . pip-audit==2.10.1 pip-licenses==5.5.5
       - name: Audit dependencies declared by the local project
         run: .venv/bin/pip-audit . --strict --progress-spinner off
+      # Keep the license gate inside this existing required status context:
+      # ruleset 25306960 already requires python-dependency-audit. Do not change
+      # the required-check contract just to run this validation-only negative control.
+      - name: Install synthetic GPL fixture when present on a negative-control branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f tests/fixtures/license-negative-control/pyproject.toml ]; then
+            .venv/bin/python -m pip install --disable-pip-version-check --no-deps ./tests/fixtures/license-negative-control
+          else
+            echo "No synthetic license fixture present; auditing declared environment only."
+          fi
+      - name: Generate dependency license inventory
+        run: .venv/bin/pip-licenses --from=all --format=json --output-file="$RUNNER_TEMP/asig-license-inventory.json"
+      - name: Enforce validation-only license policy
+        run: .venv/bin/python scripts/check_license_policy.py --policy .github/license-policy.json --report "$RUNNER_TEMP/asig-license-inventory.json"
