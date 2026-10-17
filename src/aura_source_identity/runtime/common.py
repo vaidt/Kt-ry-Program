@@ -100,7 +100,10 @@ def verify_manifest_binding(root: Path, manifest_path: Path | None) -> dict[str,
     if manifest_path is None:
         return {"status": "NOT_SUPPLIED", "manifest_sha256": None, "errors": ["no source manifest supplied"]}
     try:
+        root = root.resolve(strict=True)
         manifest_path = manifest_path.expanduser().resolve(strict=True)
+        if manifest_path == root or root in manifest_path.parents:
+            return {"status": "UNKNOWN", "manifest_sha256": None, "errors": ["source manifest must be outside the measured repository"]}
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         from ..inventory import verify_manifest
         result = verify_manifest(manifest, root)
