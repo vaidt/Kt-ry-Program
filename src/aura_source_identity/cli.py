@@ -8,8 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
+from .audit import audit_source_repository
 from .inventory import create_manifest, verify_manifest
 from .qualification import qualify_evidence
+from .runtime.node import run_node
+from .runtime.python import run_python
+from .runtime.rust import run_rust
 
 
 def _read_json(path: Path) -> Any:
@@ -97,6 +101,99 @@ def _qualify(args: argparse.Namespace) -> int:
     return 0 if result.get("status") == "PASS" else 1
 
 
+
+def _parse_mapping(values: list[str], label: str) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for value in values or []:
+        key, separator, path = value.partition("=")
+        if not separator or not key or not path:
+            raise ValueError(f"{label} entries must have the form NAME=RELATIVE_PATH")
+        if key in mapping:
+            raise ValueError(f"duplicate {label} key: {key}")
+        mapping[key] = path
+    return mapping
+
+
+def _remaining_command(values: list[str]) -> list[str]:
+    command = list(values or [])
+    if command and command[0] == "--":
+        command = command[1:]
+    if not command:
+        raise ValueError("provide a command after --")
+    return command
+
+
+def _audit(args: argparse.Namespace) -> int:
+    try:
+        root = Path(args.root)
+        _ensure_outside_root(root, args.output)
+        _ensure_outside_root(root, args.manifest_output)
+        receipt = audit_source_repository(
+            root,
+            repository=args.repository,
+            source_ref=args.source_ref,
+            manifest_output=Path(args.manifest_output),
+            receipt_output=Path(args.output),
+            exclude_names=set(args.exclude_name or []),
+            exclude_paths=set(args.exclude_path or []),
+        )
+    except (OSError, ValueError) as exc:
+        error = {"kind": "ASIG_READ_ONLY_SOURCE_AUDIT_RECEIPT", "audit_status": "BLOCKED", "error": str(exc)}
+        _emit(error)
+        return 2
+    _emit(receipt)
+    return 0 if receipt.get("audit_status") == "PASS" else 1
+
+
+def _runtime_python(args: argparse.Namespace) -> int:
+    try:
+        command = _remaining_command(args.command_argv)
+        receipt = run_python(
+            Path(args.root), command, _parse_mapping(args.module, "module"),
+            required_test_ids=args.required_test_id,
+            timeout_seconds=args.timeout,
+            output_path=Path(args.output),
+            manifest_path=Path(args.manifest) if args.manifest else None,
+        )
+    except (OSError, ValueError) as exc:
+        _emit({"qualification_status": "BLOCKED", "error": str(exc)})
+        return 2
+    _emit(receipt)
+    return 0 if receipt.get("qualification_status") == "PASS" else 1
+
+
+def _runtime_node(args: argparse.Namespace) -> int:
+    try:
+        command = _remaining_command(args.command_argv)
+        receipt = run_node(
+            Path(args.root), command, _parse_mapping(args.specifier, "specifier"),
+            timeout_seconds=args.timeout,
+            output_path=Path(args.output),
+            manifest_path=Path(args.manifest) if args.manifest else None,
+        )
+    except (OSError, ValueError) as exc:
+        _emit({"qualification_status": "BLOCKED", "error": str(exc)})
+        return 2
+    _emit(receipt)
+    return 0 if receipt.get("qualification_status") == "PASS" else 1
+
+
+def _runtime_rust(args: argparse.Namespace) -> int:
+    try:
+        command = _remaining_command(args.command_argv)
+        receipt = run_rust(
+            Path(args.root), command,
+            required_test_ids=args.required_test_id,
+            timeout_seconds=args.timeout,
+            output_path=Path(args.output),
+            manifest_path=Path(args.manifest) if args.manifest else None,
+        )
+    except (OSError, ValueError) as exc:
+        _emit({"qualification_status": "BLOCKED", "error": str(exc)})
+        return 2
+    _emit(receipt)
+    return 0 if receipt.get("qualification_status") == "PASS" else 1
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aura-source-identity",
@@ -125,6 +222,45 @@ def build_parser() -> argparse.ArgumentParser:
     qualify.add_argument("--evidence", required=True, help="execution and independent-evaluation evidence JSON")
     qualify.add_argument("--output", default=None, help="optional JSON report path")
     qualify.set_defaults(func=_qualify)
+
+    audit = sub.add_parser("audit", help="capture and verify a read-only source snapshot")
+    audit.add_argument("--root", default=".", help="target repository root")
+    audit.add_argument("--repository", required=True, help="target repository name, e.g. vaidt/Aura-Guard")
+    audit.add_argument("--source-ref", default="refs/heads/main", help="ref requested for the checkout")
+    audit.add_argument("--manifest-output", required=True, help="manifest path outside target repository")
+    audit.add_argument("--output", required=True, help="receipt path outside target repository")
+    audit.add_argument("--exclude-name", action="append", default=[], help="extra excluded path component")
+    audit.add_argument("--exclude-path", action="append", default=[], help="extra excluded relative path")
+    audit.set_defaults(func=_audit)
+
+    py_run = sub.add_parser("runtime-python", help="observe configured Python imports and pytest node IDs")
+    py_run.add_argument("--root", default=".", help="target repository root")
+    py_run.add_argument("--module", action="append", default=[], metavar="NAME=RELATIVE_PATH", help="module identity mapping; repeatable")
+    py_run.add_argument("--required-test-id", action="append", default=[], help="required pytest node ID; repeatable")
+    py_run.add_argument("--timeout", type=float, default=120.0)
+    py_run.add_argument("--output", required=True, help="receipt path outside target repository")
+    py_run.add_argument("--manifest", default=None, help="baseline source manifest captured outside target repository")
+    py_run.add_argument("command_argv", nargs=argparse.REMAINDER, help="command to execute after --")
+    py_run.set_defaults(func=_runtime_python)
+
+    node_run = sub.add_parser("runtime-node", help="observe explicitly mapped CommonJS/ESM imports")
+    node_run.add_argument("--root", default=".", help="target repository root")
+    node_run.add_argument("--specifier", action="append", default=[], metavar="SPECIFIER=RELATIVE_PATH", help="module specifier mapping; repeatable")
+    node_run.add_argument("--timeout", type=float, default=120.0)
+    node_run.add_argument("--output", required=True, help="receipt path outside target repository")
+    node_run.add_argument("--manifest", default=None, help="baseline source manifest captured outside target repository")
+    node_run.add_argument("command_argv", nargs=argparse.REMAINDER, help="command to execute after --")
+    node_run.set_defaults(func=_runtime_node)
+
+    rust_run = sub.add_parser("runtime-rust", help="run a Cargo command and capture build context (not loaded-source identity)")
+    rust_run.add_argument("--root", default=".", help="target repository root")
+    rust_run.add_argument("--required-test-id", action="append", default=[], help="expected Rust test name; repeatable")
+    rust_run.add_argument("--timeout", type=float, default=600.0)
+    rust_run.add_argument("--output", required=True, help="receipt path outside target repository")
+    rust_run.add_argument("--manifest", default=None, help="baseline source manifest captured outside target repository")
+    rust_run.add_argument("command_argv", nargs=argparse.REMAINDER, help="command to execute after --")
+    rust_run.set_defaults(func=_runtime_rust)
+
     return parser
 
 

@@ -4,15 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aura-source-identity-gate"
-version = "0.1.0"
+version = "0.2.0"
 description = "AURA Source Identity Gate: source inventory, integrity verification, and evidence qualification."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "AURA Project" }]
-dependencies = []
+dependencies = ["pytest>=8"]
 
 [project.scripts]
 aura-source-identity = "aura_source_identity.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"aura_source_identity.runtime" = ["*.cjs", "*.mjs"]

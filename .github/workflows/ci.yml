@@ -24,6 +24,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+      - name: Set up Node.js for adapter tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - name: Install build tooling and package
         run: |
           python -m pip install --upgrade pip build
@@ -44,3 +48,30 @@ jobs:
           path: dist/*
           if-no-files-found: error
           retention-days: 14
+
+  runtime-adapter-integration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Set up Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install ASIG
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+      - name: Run Python, Node, and Rust adapter contract tests
+        run: python -m unittest discover -s tests -p "test_*runtime.py" -v

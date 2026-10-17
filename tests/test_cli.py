@@ -12,7 +12,7 @@ class CliTests(unittest.TestCase):
         parser = build_parser()
         self.assertEqual(parser.prog, "aura-source-identity")
         choices = parser._subparsers._group_actions[0].choices
-        self.assertEqual(set(choices), {"capture", "verify", "qualify"})
+        self.assertEqual(set(choices), {"capture", "verify", "qualify", "audit", "runtime-python", "runtime-node", "runtime-rust"})
 
     def test_report_path_must_be_outside_measured_repository(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

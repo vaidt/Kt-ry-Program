@@ -1,0 +1,103 @@
+name: ASIG Read-only Aura-Guard Pilot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/aura_source_identity/**"
+      - "src/sitecustomize.py"
+      - "pyproject.toml"
+      - ".github/workflows/read-only-aura-guard-pilot.yml"
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-aura-guard:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Checkout ASIG auditor
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ASIG
+        run: python -m pip install .
+
+      - name: Checkout Aura-Guard read-only
+        uses: actions/checkout@v4
+        with:
+          repository: vaidt/Aura-Guard
+          ref: main
+          path: targets/Aura-Guard
+          fetch-depth: 1
+          persist-credentials: false
+          submodules: false
+
+      - name: Capture and verify read-only source inventory
+        env:
+          TARGET_REPOSITORY: vaidt/Aura-Guard
+          TARGET_REF: refs/heads/main
+          MANIFEST_PATH: ${{ runner.temp }}/asig-aura-guard-source-manifest.json
+          RECEIPT_PATH: ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
+        run: |
+          set -euo pipefail
+          aura-source-identity audit \
+            --root targets/Aura-Guard \
+            --repository "$TARGET_REPOSITORY" \
+            --source-ref "$TARGET_REF" \
+            --manifest-output "$MANIFEST_PATH" \
+            --output "$RECEIPT_PATH"
+          python - <<'PY'
+          import json, os, pathlib, sys
+          receipt = json.loads(pathlib.Path(os.environ["RECEIPT_PATH"]).read_text(encoding="utf-8"))
+          assert receipt["audit_status"] == "PASS", receipt
+          assert receipt["target"]["repository"] == "vaidt/Aura-Guard"
+          assert receipt["protocol_conformance_claimed"] is False
+          assert receipt["runtime_tests_executed"] is False
+          from aura_source_identity.canonical import object_sha256
+          body = dict(receipt)
+          claimed = body.pop("receipt_sha256")
+          assert object_sha256(body) == claimed, "receipt self-digest mismatch"
+          assert len(receipt["source_inventory"]["manifest_sha256"]) == 64
+          print("ASIG read-only source inventory PASS")
+          print("target commit:", receipt["target"]["commit_sha"])
+          print("manifest sha256:", receipt["source_inventory"]["manifest_sha256"])
+          PY
+          sha256sum "$MANIFEST_PATH" "$RECEIPT_PATH" > "${{ runner.temp }}/asig-aura-guard-checksums.txt"
+
+      - name: Generate signed provenance attestation for the receipt
+        id: attest
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
+          predicate-type: https://github.com/vaidt/Kt-ry-Program/attestations/asig-read-only-source-audit/v1
+          predicate-path: ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
+
+      - name: Upload source manifest, receipt, checksums, and attestation bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asig-aura-guard-read-only-audit-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/asig-aura-guard-source-manifest.json
+            ${{ runner.temp }}/asig-aura-guard-read-only-receipt.json
+            ${{ runner.temp }}/asig-aura-guard-checksums.txt
+            ${{ steps.attest.outputs.bundle-path }}
+          if-no-files-found: warn
+          retention-days: 90
