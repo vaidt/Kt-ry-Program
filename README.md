@@ -17,7 +17,7 @@ ASIG separates three different claims: **which source was observed**, **which te
 - **Rust/Cargo adapter:** capture command outcome, selected toolchain versions, and critical Cargo/toolchain file digests. It explicitly reports `BUILD_CONTEXT_ONLY` because it does not observe loaded machine-code instructions.
 - Generate a read-only source inventory receipt for another repository.
 - GitHub Actions workflow to sign the Aura-Guard read-only receipt using GitHub Artifact Attestations.
-- CI matrix for Python 3.11, 3.12, 3.13; Node 22 adapter tests; schema parsing; package compilation and distribution builds.
+- CI matrix for Python 3.11/3.12/3.13; Node 22 adapter tests; schema parsing; package compilation and distribution builds.
 
 ## Quick start
 
@@ -67,11 +67,13 @@ After the Aura-Guard pilot has a successful, reviewable receipt, the planned nex
 
 After downloading the receipt artifact from GitHub Actions, verify it with GitHub CLI:
 
-`gh attestation verify asig-aura-guard-read-only-receipt.json --repo vaidt/Kt-ry-Program --signer-workflow vaidt/Kt-ry-Program/.github/workflows/read-only-aura-guard-pilot.yml --predicate-type https://github.com/vaidt/Kt-ry-Program/attestations/asig-read-only-source-audit/v1`
+```sh
+gh attestation verify asig-aura-guard-read-only-receipt.json --repo vaidt/Kt-ry-Program --signer-workflow vaidt/Kt-ry-Program/.github/workflows/read-only-aura-guard-pilot.yml --predicate-type https://github.com/vaidt/Kt-ry-Program/attestations/asig-read-only-source-audit/v1
+```
 
 This verifies the artifact attestation’s signature and configured signer identity. The signed receipt proves which read-only source snapshot the ASIG workflow recorded; it is not an attestation that the target repository’s code is correct or Aura-conformant.
 
-See [CI Attestations](docs/CI_ATTESTATIONS.md), [Runtime Adapters](docs/RUNTIME_ADAPTERS.md), [the read-only receipt schema](schemas/read-only-source-audit-receipt.schema.json), [architecture](docs/ARCHITECTURE.md), [the threat model](docs/THREAT_MODEL.md), and [the AURA adoption map](docs/AURA_ADOPTION_MAP.md).
+See [CI Attestations](docs/CI_ATTESTATIONS.md), [Runtime Adapters](docs/RUNTIME_ADAPTERS.md), [the read-only receipt schema](schemas/read-only-source-audit-receipt.schema.json), [architecture](docs/ARCHITECTURE.md), [the threat model](docs/THREAT_MODEL.md), [the AURA adoption map](docs/AURA_ADOPTION_MAP.md), and [the RI-PY/RI-RS inventory evidence review](docs/REFERENCE_INVENTORY_EVIDENCE_VERIFICATION.md).
 
 ## Integration boundary
 
@@ -87,4 +89,4 @@ This is an independent implementation informed by public design material from [d
 
 Run tests with `python -m unittest discover -s tests -v`. CI compiles the package, validates JSON files, runs the tests on supported Python versions, tests Node adapters under Node 22, and builds wheel/source distributions.
 
-**Current status:** second-stage feature branch; CI and read-only pilot receipt must be reviewed before RI-PY/RI-RS rollout.
+**Current status:** ASIG 0.2.0 on `main`; the Aura-Guard source-identity pilot and pinned RI-PY/RI-RS source-inventory evidence have independently verified PASS results. RI-PY/RI-RS runtime qualification, protocol conformance, and release-gate adoption remain **BLOCKED** pending separate approved authorization.
