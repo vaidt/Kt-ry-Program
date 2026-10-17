@@ -70,6 +70,7 @@ def run_rust(
         test_status = "UNKNOWN"
 
     qualification_status = "FAIL" if command_result["exit_code"] != 0 or source_snapshot["status"] == "MISMATCH" else "BLOCKED"
+    command_receipt = {key: value for key, value in command_result.items() if key not in {"stdout", "stderr"}}
     receipt: dict[str, Any] = {
         "schema_version": 1,
         "qualification_status": qualification_status,
