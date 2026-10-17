@@ -10,17 +10,19 @@ from pathlib import Path
 from typing import Any
 
 from ..canonical import object_sha256
-from .common import read_jsonl, run_process, sha256_file, write_json
+from .common import combine_snapshot_checks, read_jsonl, run_process, sha256_file, verify_manifest_binding, write_json
 
 
 def _python_argv(argv: list[str]) -> tuple[list[str], bool]:
     args = list(argv)
     if args and Path(args[0]).name in {"pytest", "py.test"}:
-        return [sys.executable, "-B", "-m", "pytest", "-p", "aura_source_identity.runtime.pytest_plugin", *args[1:]], True
+        return [sys.executable, "-B", "-m", "pytest", "-p", "aura_source_identity.runtime.pytest_plugin", "-p", "no:cacheprovider", *args[1:]], True
     for index in range(len(args) - 1):
         if Path(args[index]).name.startswith("python") and args[index + 1] == "-m" and index + 2 < len(args) and args[index + 2] == "pytest":
             args.insert(index + 3, "-p")
             args.insert(index + 4, "aura_source_identity.runtime.pytest_plugin")
+            args.insert(index + 5, "-p")
+            args.insert(index + 6, "no:cacheprovider")
             return args, True
     return args, False
 
@@ -33,6 +35,7 @@ def run_python(
     required_test_ids: list[str] | None = None,
     timeout_seconds: float = 120,
     output_path: Path | None = None,
+    manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve(strict=True)
     if not root.is_dir():
@@ -67,6 +70,7 @@ def run_python(
             raise ValueError(f"monitored module path is not a file: {relative}")
         expected[module] = str(candidate)
 
+    snapshot_before = verify_manifest_binding(root, manifest_path)
     command, is_pytest = _python_argv(argv)
     asig_src = str(Path(__file__).resolve().parents[2])
     env = os.environ.copy()
@@ -88,6 +92,8 @@ def run_python(
             bootstrap_dir.rmdir()
         except OSError:
             pass
+    snapshot_after = verify_manifest_binding(root, manifest_path)
+    source_snapshot = combine_snapshot_checks(snapshot_before, snapshot_after)
     module_records = [row for row in read_jsonl(runtime_log) if row.get("event") in {"module", "module_unobservable"}]
     process_records = [row for row in read_jsonl(runtime_log) if row.get("event") in {"process_start", "process_end", "observer_error", "observer_bootstrap_error"}]
     test_records = [row for row in read_jsonl(test_log) if row.get("event") == "test_result"]
@@ -134,8 +140,8 @@ def run_python(
         test_scope_status = "UNKNOWN"
 
     qualification_status = (
-        "FAIL" if identity_status == "MISMATCH" or test_scope_status == "FAIL"
-        else "PASS" if identity_status == "EXACT_MATCH" and test_scope_status == "COMPLETE_PASS"
+        "FAIL" if identity_status == "MISMATCH" or test_scope_status == "FAIL" or source_snapshot["status"] == "MISMATCH"
+        else "PASS" if identity_status == "EXACT_MATCH" and test_scope_status == "COMPLETE_PASS" and source_snapshot["status"] == "EXACT_MATCH"
         else "BLOCKED"
     )
     receipt: dict[str, Any] = {
@@ -144,6 +150,7 @@ def run_python(
         "kind": "ASIG_PYTHON_RUNTIME_RECEIPT",
         "runtime": "python",
         "run_id": env["ASIG_RUN_ID"],
+        "source_snapshot": source_snapshot,
         "command": command_result,
         "module_identity": {
             "status": identity_status,
