@@ -20,6 +20,10 @@ def audit_source_repository(
     exclude_names: set[str] | None = None,
     exclude_paths: set[str] | None = None,
 ) -> dict[str, Any]:
+    if not isinstance(repository, str) or not repository.strip():
+        raise ValueError("repository must be a non-empty identifier")
+    if not isinstance(source_ref, str) or not source_ref.strip():
+        raise ValueError("source_ref must be a non-empty Git ref")
     root = root.resolve(strict=True)
     manifest_path = manifest_output.expanduser().resolve(strict=False)
     receipt_path = receipt_output.expanduser().resolve(strict=False)
