@@ -144,6 +144,7 @@ def run_python(
         else "PASS" if identity_status == "EXACT_MATCH" and test_scope_status == "COMPLETE_PASS" and source_snapshot["status"] == "EXACT_MATCH"
         else "BLOCKED"
     )
+    command_receipt = {key: value for key, value in command_result.items() if key not in {"stdout", "stderr"}}
     receipt: dict[str, Any] = {
         "schema_version": 1,
         "qualification_status": qualification_status,
