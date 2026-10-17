@@ -321,7 +321,7 @@ Review the policy after a security incident, material change to repository workf
 | License policy | Validation-only negative-control PR #17 emitted `LICENSE_POLICY_BANNED` for the synthetic GPLv3 fixture; required `python-dependency-audit` failed and PR was API-observed as blocked, then closed without merge. The isolated source ref was deleted and verified absent. See §9.3 and [LICENSE_POLICY_VALIDATION_RECORD.md](LICENSE_POLICY_VALIDATION_RECORD.md). The final legal/repository-license disposition remains OPEN. |
 | Integration ruleset | Active, ID `25306960`, targeted only to `refs/heads/integration`; verified by read-back. No bypass actors. The branch exists at the authorized validation baseline and remains restricted to validation; experimental merges are not authorized. |
 | Dedicated Dependency Review | Absent; temporary R&D-only residual risk in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md) |
-| Sigstore / SLSA | Read-only source-inventory attestation is distinct from the synthetic-artifact build-provenance validation in §9.4; no product release artifact has been attested by this test |
+| Sigstore / SLSA | [ATTESTATION_VALIDATION_RECORD.md](ATTESTATION_VALIDATION_RECORD.md) records the synthetic-artifact provenance validation in §9.4. The read-only source-inventory attestation remains separate; no product release artifact has been attested by this test. |
 | CAPA NC-ASIG-2026-10-17-PR10 | Separate and open; not closed by this policy |
 | Runtime qualification / AURA conformance | Not authorized by this policy |
 
