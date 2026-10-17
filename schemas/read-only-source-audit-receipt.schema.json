@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vaidt/Kt-ry-Program/schemas/read-only-source-audit-receipt.schema.json",
+  "title": "ASIG Read-only Source Audit Receipt",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "audit_mode",
+    "target",
+    "source_inventory",
+    "observed_at_utc",
+    "source_identity_verification",
+    "audit_status",
+    "protocol_conformance_claimed",
+    "runtime_tests_executed",
+    "runtime_identity_observed",
+    "limitations",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "ASIG_READ_ONLY_SOURCE_AUDIT_RECEIPT" },
+    "audit_mode": { "const": "READ_ONLY_SOURCE_INVENTORY" },
+    "target": {
+      "type": "object",
+      "required": ["repository", "requested_ref", "commit_sha", "tree_sha"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "requested_ref": { "type": "string", "minLength": 1 },
+        "commit_sha": { "type": ["string", "null"] },
+        "tree_sha": { "type": ["string", "null"] }
+      }
+    },
+    "source_inventory": {
+      "type": "object",
+      "required": ["file_count", "source_tree_sha256", "manifest_sha256", "manifest_path"],
+      "properties": {
+        "file_count": { "type": "integer", "minimum": 0 },
+        "source_tree_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "manifest_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "manifest_path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "observed_at_utc": { "type": "string", "minLength": 1 },
+    "source_identity_verification": {
+      "type": "object",
+      "required": ["status", "manifest_integrity", "source_files_match", "commit_match", "git_tree_match"],
+      "properties": {
+        "status": { "enum": ["EXACT_MATCH", "MISMATCH", "UNKNOWN"] },
+        "manifest_integrity": { "type": "boolean" },
+        "source_files_match": { "type": "boolean" },
+        "commit_match": { "type": "boolean" },
+        "git_tree_match": { "type": "boolean" },
+        "working_tree_clean": { "type": ["boolean", "null"] },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "audit_status": { "enum": ["PASS", "FAIL", "BLOCKED"] },
+    "protocol_conformance_claimed": { "const": false },
+    "runtime_tests_executed": { "const": false },
+    "runtime_identity_observed": { "const": false },
+    "limitations": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "receipt_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}
