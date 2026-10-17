@@ -71,6 +71,26 @@ class PythonRuntimeTests(unittest.TestCase):
             self.assertEqual(receipt["module_identity"]["status"], "MISMATCH")
             self.assertEqual(receipt["qualification_status"], "FAIL")
 
+
+    def test_source_mutated_during_command_fails_snapshot_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            root = base / "repo"
+            root.mkdir()
+            manifest = self._workspace(root)
+            manifest_path = base / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            receipt = run_python(
+                root,
+                ["python", "-c", "from pathlib import Path; Path('probe.py').write_text('VALUE = 9\\n')"],
+                {"probe": "probe.py"},
+                required_test_ids=["test_probe.py::test_value"],
+                output_path=base / "receipt.json",
+                manifest_path=manifest_path,
+            )
+            self.assertEqual(receipt["source_snapshot"]["status"], "MISMATCH")
+            self.assertEqual(receipt["qualification_status"], "FAIL")
+
     def test_missing_expected_test_keeps_qualification_blocked(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
