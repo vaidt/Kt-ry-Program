@@ -110,6 +110,8 @@ Before activation, configure and verify:
 
 The policy does not prescribe an unconfigured scanner as already active. Scanner choice, version, thresholds, suppressions, and false-positive review must be documented. High-severity findings, exposed credentials, or unapproved suppressions block merge pending a recorded disposition.
 
+The dedicated GitHub Dependency Review workflow is not present at this time. A bounded residual-risk decision for the non-authoritative R&D track is recorded in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md). The compensating Python dependency audit remains mandatory. This temporary R&D-only treatment is not a substitute for the missing PR dependency-diff control on `main` or for release promotion, and it does not permit adding another package ecosystem without corresponding verified scanning.
+
 DAST is conditional: it is required only when a deployed test service or application is in scope and a safe, authorized test target exists. It is not a substitute for SAST or dependency scanning.
 
 ### 5.3 Artifact provenance and Sigstore verification
@@ -229,10 +231,12 @@ Review the policy after a security incident, material change to repository workf
 |---|---|
 | This policy | RATIFIED FOR PREPARATION ONLY / INTEGRATION NOT ACTIVE |
 | `main` protection | Must remain unchanged; verify live configuration before activation |
-| `integration` branch | NOT CREATED by this proposal |
-| Additional SAST / secret / dependency scanners | Proposed; not evidenced as active in current `ci.yml` |
+| `integration` branch | NOT CREATED; activation blocked pending the full checklist |
+| Baseline CI | Verified successful on commit `fa5e4254f0770d37480e47033b2c3407fce9cf4b` |
+| CodeQL / Gitleaks / Python dependency audit | Workflow implemented on `infra/ci-updates`; prior run passed. Latest full-history scan on the updated workflow still requires a successful result on the new head |
+| Dedicated Dependency Review | Absent; temporary R&D-only residual risk recorded in [SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md](SECURITY_CONTROL_RESIDUAL_RISK_REGISTER.md) |
 | Sigstore | Current read-only source-inventory attestation exists; not a general build attestation |
-| CAPA NC-ASIG-2026-10-17-PR10 | Separate; not closed by this proposal |
+| CAPA NC-ASIG-2026-10-17-PR10 | Separate; not closed by this policy |
 | Runtime qualification / AURA conformance | Not authorized by this policy |
 
 ---
