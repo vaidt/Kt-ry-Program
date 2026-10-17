@@ -1,0 +1,17 @@
+# SHA-256 manifest extracted from workflow artifact
+
+Source run: https://github.com/vaidt/Kt-ry-Program/actions/runs/39038179646
+Artifact ID: 12102634225
+Artifact ZIP SHA-256: da72aba23558e5f6abbf0716ade226e926bfab9894fa1c845fb0bcbe3bf58391
+
+The five entries below are the exact contents of `asig-reference-inventory-SHA256SUMS.txt` inside the downloaded artifact.
+
+```text
+6757c50423812b2d6aa973d8d519ac795b956b17e454e2daa1dab3453af5e6d2  asig-ri-py-source-manifest.json
+2d5aa2ada9b5dd71c1325da0471b52138d9db0061e92add0d9f444e258080987  asig-ri-py-source-receipt.json
+4c8438e1657ec7c6ebdd84e3d8d0c20edca0b7faac71cc56295f9fd0860255bc  asig-ri-rs-source-manifest.json
+91a58a6402077a86f6c4899778825e67f8c4ba1e2135f21852075cf4970f2bd5  asig-ri-rs-source-receipt.json
+cabf9d98b95efbe38bef63e49c15aea8fc13297d26a76a0583674937013b91e4  asig-reference-inventory-context.json
+```
+
+Verification output from the original workflow reports `OK` for each of the five files. Signed archive, bundle, and verification-JSON digests are separately listed in `ASIG_RUN_39038179646_SIGSTORE_CHECKSUM_RAW.log`.
