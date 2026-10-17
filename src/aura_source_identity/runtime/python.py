@@ -118,8 +118,14 @@ def run_python(
     else:
         test_scope_status = "UNKNOWN"
 
+    qualification_status = (
+        "FAIL" if identity_status == "MISMATCH" or test_scope_status == "FAIL"
+        else "PASS" if identity_status == "EXACT_MATCH" and test_scope_status == "COMPLETE_PASS"
+        else "BLOCKED"
+    )
     receipt: dict[str, Any] = {
         "schema_version": 1,
+        "qualification_status": qualification_status,
         "kind": "ASIG_PYTHON_RUNTIME_RECEIPT",
         "runtime": "python",
         "run_id": env["ASIG_RUN_ID"],
