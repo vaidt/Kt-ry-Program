@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ..canonical import object_sha256
-from .common import read_jsonl, run_process, write_json
+from .common import combine_snapshot_checks, read_jsonl, run_process, verify_manifest_binding, write_json
 
 
 def run_node(
@@ -20,6 +20,7 @@ def run_node(
     *,
     timeout_seconds: float = 120,
     output_path: Path | None = None,
+    manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve(strict=True)
     if output_path is None:
@@ -52,7 +53,10 @@ def run_node(
     additions = f"--require={cjs} --experimental-loader={esm.as_uri()}"
     env["NODE_OPTIONS"] = (env.get("NODE_OPTIONS", "") + " " + additions).strip()
 
+    snapshot_before = verify_manifest_binding(root, manifest_path)
     command_result = run_process(list(argv), root, env, timeout_seconds)
+    snapshot_after = verify_manifest_binding(root, manifest_path)
+    source_snapshot = combine_snapshot_checks(snapshot_before, snapshot_after)
     records = [row for row in read_jsonl(log_path) if row.get("event") == "module"]
     per_specifier: dict[str, str] = {}
     for specifier in expected:
@@ -79,7 +83,7 @@ def run_node(
         identity_status = "UNKNOWN"
 
     qualification_status = (
-        "FAIL" if identity_status == "MISMATCH" or command_result["exit_code"] != 0
+        "FAIL" if identity_status == "MISMATCH" or command_result["exit_code"] != 0 or source_snapshot["status"] == "MISMATCH"
         else "BLOCKED"
     )
     receipt: dict[str, Any] = {
@@ -88,6 +92,7 @@ def run_node(
         "kind": "ASIG_NODE_RUNTIME_RECEIPT",
         "runtime": "node",
         "run_id": env["ASIG_RUN_ID"],
+        "source_snapshot": source_snapshot,
         "command": command_result,
         "module_identity": {
             "status": identity_status,
