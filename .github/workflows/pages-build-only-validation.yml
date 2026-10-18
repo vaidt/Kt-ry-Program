@@ -1,0 +1,56 @@
+name: ASIG Pages Build-Only Validation
+
+on:
+  push:
+    branches:
+      - "infra/pages-build-only-validation-20261018"
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  actionlint:
+    name: actionlint workflow syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Run actionlint on CI and Pages workflows
+        run: >-
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          .github/workflows/ci.yml
+          .github/workflows/jekyll-gh-pages.yml
+          .github/workflows/pages-build-only-validation.yml
+
+  build-only:
+    name: Build Jekyll site without deployment
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Configure Pages metadata without enabling Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
+        with:
+          enablement: false
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697
+        with:
+          source: ./
+          destination: ./_site
+      - name: Verify generated site is non-empty
+        run: |
+          test -d _site
+          test -n "$(find _site -type f -print -quit)"
+      - name: Prepare Pages artifact only
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: _site/
+          retention-days: 1
