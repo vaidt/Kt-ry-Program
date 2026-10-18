@@ -50,6 +50,7 @@
       }
     },
     "hash_contract": { "type": "string" },
+    "canonicalization": { "enum": ["ASIG_JSON_SORTED_V1", "RFC8785_JCS"] },
     "manifest_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
   }
 }
