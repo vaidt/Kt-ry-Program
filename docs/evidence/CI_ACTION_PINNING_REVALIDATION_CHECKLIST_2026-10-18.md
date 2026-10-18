@@ -6,7 +6,7 @@
 **Affected source commit:** `d2ed5821412ba69e4a7294fb832bd2da5fa92002`  
 **Remediation branch:** `infra/pin-actions-sha-failure-39130015871`  
 **Verified test head before this evidence update:** `9c1fa773e181e6162165be02fac60b7c9659cf29`  
-**Status:** PATCH PREPARED · CI PASS ON TESTED HEAD · INDEPENDENT REVIEW PENDING · NOT MERGED
+**Status:** PR #30 MERGED · POST-MERGE PAGES FAILURE CONFIRMED · FOLLOW-UP BUILD-ONLY PASS · GOVERNANCE DISPOSITION OPEN
 
 ## 1. Incident evidence
 
@@ -115,15 +115,60 @@ The patch is targeted at the failing workflows observed for this incident. The c
 
 A non-blocking Node.js 20 deprecation warning was observed in the successful run for some pinned actions, which GitHub said were being forced to run on Node.js 24. This did not fail the run but should be considered in a separate action-version compatibility review.
 
-## 6. Current disposition
+## 6. Disposition of original PR #30
 
-- Workflow patch: **PREPARED ON A SEPARATE BRANCH**
-- ASIG CI on tested head: **PASS; evidence above**
-- Current updated head / PR head: **MUST BE REVALIDATED**
-- Pages workflow on remediation branch: **NOT EXECUTED**
-- Independent review: **PENDING**
-- Merge to `main`: **NOT PERFORMED**
-- Branch protection / ruleset mutations: **NONE**
-- Incident closure: **OPEN pending final-head CI, independent review, and required process**
+- PR #30 was merged by GitHub account `vaidt` at `2026-10-18T14:48:05Z`; merge commit: `ac0e10b1f16ac7f3f30f3c33bffcc6b883501f8b`.
+- At merge time, the PR description still listed safe Pages execution as not performed and independent review as a required merge condition. The recorded approval is from `kamilkrasinski4-sys`; human/controller independence remains **NOT PROVEN** under the project's governance assessment.
+- This checklist records the platform event. It does not infer the rationale for merging and does not treat the platform merge as proof of governance authorization or CAPA closure.
+- The subsequent Pages workflow run on the resulting `main` commit failed before executing the build job steps. The follow-up root-cause evidence and corrective proposal are in Section 7.
+- The original incident/CAPA and the governance disposition remain **OPEN** until the authorized reviewer resolves the recorded process and evidence gaps.
 
-A successful action-initialization phase alone is insufficient. The reviewed PR head must have passing required checks and an independent review; the remaining Pages and repository-wide pinning scope limitations must remain explicit.
+## 7. Post-merge Pages failure and build-only revalidation
+
+### 7.1 Failure observed on main
+
+The Pages workflow run [39137615992](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137615992), on merge commit `ac0e10b1f16ac7f3f30f3c33bffcc6b883501f8b`, failed in job [build](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137615992/job/117705243515) during action preparation; the deployment job was skipped. The runner log reports:
+
+```text
+The action actions/upload-artifact@v4 is not allowed in vaidt/Kt-ry-Program because all actions must be pinned to a full-length commit SHA.
+```
+
+The direct workflow reference `actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa` is a pinned composite action, but its upstream `action.yml` internally invokes `actions/upload-artifact@v4`. Pinning the top-level composite-action commit therefore did not satisfy this repository's enforcement of full-SHA action references for the nested action. The first isolated build-only attempt, [run 39137597624](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137597624), hit the same nested-reference rejection during job preparation.
+
+### 7.2 Corrective implementation prepared on a separate branch
+
+- Branch: `infra/pages-build-only-validation-fix-20261018`
+- Tested HEAD: `4dcba7fe72015eb6f0f0867bddfd03fb0e3b9ec1`
+- Updated production workflow: `.github/workflows/jekyll-gh-pages.yml`
+- Added reusable validation workflow: `.github/workflows/pages-build-only-validation.yml`
+
+The production Pages workflow replaces the `upload-pages-artifact` composite action with the same Pages-compatible `artifact.tar` preparation pattern (dereference files, archive the contents of `_site`, exclude `.git` and `.github`) and directly uses the existing full-SHA-pinned `actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02`. The artifact name remains `github-pages` for the production deployment path. This change is proposed for review; it has not been merged to `main`.
+
+The reusable validation workflow has no `actions/deploy-pages` step. It configures Pages metadata with `enablement: false`, builds the site, asserts `_site` is non-empty, creates the Pages-compatible tar archive, and uploads it under a separate, one-day build-only artifact name. Its permissions are limited to `contents: read` and `pages: read`.
+
+### 7.3 Verification results on the corrective branch
+
+| Control | Evidence | Result |
+|---|---|---|
+| `actionlint` over `ci.yml`, `jekyll-gh-pages.yml`, and `pages-build-only-validation.yml` | [Run 39137852709](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137852709), job [actionlint](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137852709/job/117705933782) | **PASS** |
+| Jekyll build without deployment | [Run 39137852709](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137852709), job [build-only](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137852709/job/117705933346) | **PASS** |
+| Non-empty generated site | Included as a successful explicit step in the build-only job | **PASS** |
+| Pages-compatible artifact archive and upload | Artifact ID `12139984198`; SHA-256 `99389038beb10cbd7c8421f7de6e83b94224b44ecbba572a25c3b2f65f34c3c8`; size 395,967 bytes | **PASS** |
+| ASIG CI on tested HEAD `4dcba7f` | [Run 39137852727](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137852727) | **PASS** |
+| ASIG Security Controls on tested HEAD `4dcba7f` | [Run 39137852740](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137852740) | **PASS** |
+| GitHub Pages deployment | `actions/deploy-pages` was deliberately absent from build-only workflow | **NOT EXECUTED BY DESIGN** |
+
+The build-only artifact expires at `2026-10-19T14:51:34Z`; retain the run link and digest as the durable evidence references. The test proves static validity, successful Jekyll build, generated-site presence, and artifact packaging on the tested corrective-branch HEAD. It does not prove that the production deployment step succeeds.
+
+### 7.4 Current disposition and remaining gates
+
+- Original PR #30: **MERGED**; this is a platform state, not an assertion of governance closure.
+- Root cause of the post-merge Pages job failure: **IDENTIFIED** — nested mutable `actions/upload-artifact@v4` in the composite upload-pages action.
+- Corrective Pages workflow on branch `infra/pages-build-only-validation-fix-20261018`: **PREPARED; BUILD-ONLY AND ACTIONLINT PASS**.
+- Corrective branch has not been merged; the production Pages workflow on `main` remains subject to the observed failure until the correction is reviewed and merged.
+- A separate reviewer must evaluate the tar/upload substitution and its compatibility with `actions/deploy-pages`. No production deployment was executed during this verification.
+- Reviewer/controller independence and relevant governance authorization: **NOT PROVEN / OPEN**.
+- Repository-wide SHA policy: **NOT CLAIMED CLOSED**; other workflows still require separate inventory and review.
+- Incident/CAPA closure and production release authorization: **NOT GRANTED BY THIS EVIDENCE**.
+
+The corrective proposal preserves the security policy by removing the nested mutable action rather than weakening the ruleset. Merge remains subject to normal repository checks, independent review, and governance authorization.
