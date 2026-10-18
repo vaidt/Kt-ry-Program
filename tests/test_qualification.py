@@ -53,6 +53,33 @@ class QualificationTests(unittest.TestCase):
             self.assertEqual(result["status"], "PASS")
             self.assertEqual(result["required_test_count"], 2)
 
+    def test_required_missing_manifest_signature_blocks_complete_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "repo"
+            root.mkdir()
+            git_repo(root)
+            manifest = create_manifest(root, repository="test/repo")
+            verification = verify_manifest(manifest, root, require_signature=True)
+            result = qualify_evidence(evidence_for(manifest), verification)
+            self.assertEqual(result["status"], "BLOCKED")
+            self.assertEqual(result["signature_status"], "missing")
+            self.assertEqual(result["signature_policy"], "required")
+            self.assertTrue(result["blockers"])
+
+    def test_invalid_manifest_signature_fails_qualification(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "repo"
+            root.mkdir()
+            git_repo(root)
+            manifest = create_manifest(root, repository="test/repo")
+            verification = verify_manifest(
+                manifest, root, require_signature=True,
+                signature_verifier=lambda: {"status": "invalid", "backend": "test"},
+            )
+            result = qualify_evidence(evidence_for(manifest), verification)
+            self.assertEqual(result["status"], "FAIL")
+            self.assertEqual(result["signature_status"], "invalid")
+
     def test_missing_required_test_is_blocked_not_pass(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "repo"

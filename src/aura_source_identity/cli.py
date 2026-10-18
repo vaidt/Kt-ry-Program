@@ -14,6 +14,7 @@ from .qualification import qualify_evidence
 from .runtime.node import run_node
 from .runtime.python import run_python
 from .runtime.rust import run_rust
+from .signatures import verify_cosign_blob, verify_github_attestation
 
 
 def _read_json(path: Path) -> Any:
@@ -51,6 +52,10 @@ def _capture(args: argparse.Namespace) -> int:
             repository=args.repository,
             exclude_names=set(args.exclude_name or []),
             exclude_paths=set(args.exclude_path or []),
+            canonicalization=(
+                "RFC8785_JCS" if args.canonicalization == "rfc8785"
+                else "ASIG_JSON_SORTED_V1"
+            ),
         )
         _write_json(Path(args.output), manifest)
     except (OSError, ValueError) as exc:
@@ -71,23 +76,69 @@ def _capture(args: argparse.Namespace) -> int:
     return 0 if clean else 1
 
 
+def _signature_verifier(args: argparse.Namespace, manifest_path: Path):
+    if args.signature_backend == "github-attestation":
+        if args.signature_bundle:
+            return lambda: {
+                "status": "unverifiable",
+                "backend": "github-attestation",
+                "error": "--signature-bundle cannot be combined with --signature-backend github-attestation",
+            }
+        return lambda: verify_github_attestation(
+            manifest_path,
+            repository=args.attestation_repository,
+            signer_workflow=args.attestation_signer_workflow,
+            timeout_seconds=args.signature_timeout,
+        )
+    if args.signature_bundle:
+        return lambda: verify_cosign_blob(
+            manifest_path,
+            Path(args.signature_bundle),
+            certificate_identity=args.certificate_identity,
+            certificate_identity_regexp=args.certificate_identity_regexp,
+            certificate_oidc_issuer=args.certificate_oidc_issuer,
+            timeout_seconds=args.signature_timeout,
+        )
+    return None
+
+
 def _verify(args: argparse.Namespace) -> int:
     try:
-        _ensure_outside_root(Path(args.root), args.output)
-        manifest = _read_json(Path(args.manifest))
-        result = verify_manifest(manifest, Path(args.root))
+        root = Path(args.root)
+        _ensure_outside_root(root, args.output)
+        manifest_path = Path(args.manifest)
+        manifest = _read_json(manifest_path)
+        verifier = _signature_verifier(args, manifest_path)
+        result = verify_manifest(
+            manifest, root,
+            require_signature=args.require_signature,
+            signature_verifier=verifier,
+        )
     except (OSError, json.JSONDecodeError, ValueError) as exc:
-        result = {"status": "UNKNOWN", "errors": [str(exc)]}
+        result = {
+            "status": "UNKNOWN",
+            "signature_policy": "required" if args.require_signature else "optional",
+            "signature_status": "unverifiable",
+            "signature_valid": None,
+            "errors": [str(exc)],
+        }
     _emit(result, args.output)
     return 0 if result.get("status") == "EXACT_MATCH" else 1
 
 
 def _qualify(args: argparse.Namespace) -> int:
     try:
-        _ensure_outside_root(Path(args.root), args.output)
-        manifest = _read_json(Path(args.manifest))
+        root = Path(args.root)
+        _ensure_outside_root(root, args.output)
+        manifest_path = Path(args.manifest)
+        manifest = _read_json(manifest_path)
         evidence = _read_json(Path(args.evidence))
-        source_verification = verify_manifest(manifest, Path(args.root))
+        verifier = _signature_verifier(args, manifest_path)
+        source_verification = verify_manifest(
+            manifest, root,
+            require_signature=args.require_signature,
+            signature_verifier=verifier,
+        )
         result = qualify_evidence(evidence, source_verification)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         result = {
@@ -100,6 +151,27 @@ def _qualify(args: argparse.Namespace) -> int:
     _emit(result, args.output)
     return 0 if result.get("status") == "PASS" else 1
 
+
+def _add_signature_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--require-signature", action="store_true",
+        help="require a verified detached signature/attestation; otherwise missing or unverifiable evidence can return UNKNOWN/BLOCKED",
+    )
+    parser.add_argument(
+        "--signature-backend", choices=["cosign-blob", "github-attestation"],
+        default="cosign-blob",
+        help="Cosign Sigstore bundle or GitHub DSSE/SLSA artifact attestation",
+    )
+    parser.add_argument("--signature-bundle", default=None, help="Cosign Sigstore bundle for the exact manifest bytes")
+    parser.add_argument("--certificate-identity", default=None, help="expected exact Fulcio certificate identity for Cosign")
+    parser.add_argument("--certificate-identity-regexp", default=None, help="expected certificate identity regexp for Cosign")
+    parser.add_argument(
+        "--certificate-oidc-issuer", default="https://token.actions.githubusercontent.com",
+        help="expected OIDC issuer for keyless Cosign verification",
+    )
+    parser.add_argument("--attestation-repository", default=None, help="expected owner/repository for GitHub attestation lookup")
+    parser.add_argument("--attestation-signer-workflow", default=None, help="expected owner/repository/workflow path for GitHub attestation")
+    parser.add_argument("--signature-timeout", type=float, default=60.0, help="signature verifier timeout in seconds")
 
 
 def _parse_mapping(values: list[str], label: str) -> dict[str, str]:
@@ -208,12 +280,17 @@ def build_parser() -> argparse.ArgumentParser:
     capture.add_argument("--output", required=True, help="manifest path; place it outside the measured repository")
     capture.add_argument("--exclude-name", action="append", default=[], help="extra excluded path component (repeatable)")
     capture.add_argument("--exclude-path", action="append", default=[], help="extra excluded relative path (repeatable)")
+    capture.add_argument(
+        "--canonicalization", choices=["asig-v1", "rfc8785"], default="asig-v1",
+        help="manifest hash encoding; legacy ASIG bytes remain the default",
+    )
     capture.set_defaults(func=_capture)
 
     verify = sub.add_parser("verify", help="verify manifest integrity and current checkout identity")
     verify.add_argument("--root", default=".", help="repository root to verify")
     verify.add_argument("--manifest", required=True, help="captured manifest JSON")
     verify.add_argument("--output", default=None, help="optional JSON report path")
+    _add_signature_arguments(verify)
     verify.set_defaults(func=_verify)
 
     qualify = sub.add_parser("qualify", help="qualify test evidence against a verified source manifest")
@@ -221,6 +298,7 @@ def build_parser() -> argparse.ArgumentParser:
     qualify.add_argument("--manifest", required=True, help="captured source manifest JSON")
     qualify.add_argument("--evidence", required=True, help="execution and independent-evaluation evidence JSON")
     qualify.add_argument("--output", default=None, help="optional JSON report path")
+    _add_signature_arguments(qualify)
     qualify.set_defaults(func=_qualify)
 
     audit = sub.add_parser("audit", help="capture and verify a read-only source snapshot")

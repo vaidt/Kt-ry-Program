@@ -92,3 +92,26 @@ This is an independent implementation informed by public design material from [d
 Run tests with `python -m unittest discover -s tests -v`. CI compiles the package, validates JSON files, runs the tests on supported Python versions, tests Node adapters under Node 22, and builds wheel/source distributions.
 
 **Current status:** ASIG 0.2.0 on `main`; the Aura-Guard source-identity pilot and pinned RI-PY/RI-RS source-inventory evidence have independently verified PASS results. RI-PY/RI-RS runtime qualification, protocol conformance, and release-gate adoption remain **BLOCKED** pending separate approved authorization.
+
+
+## Manifest signatures and canonicalization
+
+Manifest integrity and signer authenticity are separate controls. The default
+ASIG JSON encoding remains unchanged so historical manifests continue to verify.
+Opt in to RFC 8785/JCS with `capture --canonicalization rfc8785` after installing
+`python -m pip install ".[canonical]"`. JCS manifests declare
+`canonicalization: RFC8785_JCS`; older manifests with no field continue using
+`ASIG_JSON_SORTED_V1`. Explicit JCS mode fails closed if the optional encoder
+is unavailable instead of silently producing different hashes.
+
+Detached signature verification is available for:
+- Cosign/Sigstore bundles using `verify --require-signature --signature-bundle ... --certificate-identity ... --certificate-oidc-issuer https://token.actions.githubusercontent.com`.
+- GitHub DSSE/SLSA attestations using `verify --require-signature --signature-backend github-attestation --attestation-repository owner/repo --attestation-signer-workflow owner/repo/.github/workflows/workflow.yml`.
+
+Results explicitly report `valid`, `missing`, `invalid`, or `unverifiable`.
+Optional absence preserves legacy verification behavior. An invalid signature
+produces `MISMATCH`; a required but missing or unverifiable signature produces
+`UNKNOWN` and blocks evidence qualification unless the source independently
+mismatches. Signature sidecars are not embedded in the manifest hash input.
+These controls do not establish protocol conformance or production readiness.
+See [Manifest Signature Verification](docs/MANIFEST_SIGNATURE_VERIFICATION.md).

@@ -11,6 +11,9 @@ requires-python = ">=3.11"
 authors = [{ name = "AURA Project" }]
 dependencies = ["pytest>=8"]
 
+[project.optional-dependencies]
+canonical = ["rfc8785>=0.1.4"]
+
 [project.scripts]
 aura-source-identity = "aura_source_identity.cli:main"
 

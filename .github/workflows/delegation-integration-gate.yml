@@ -9,6 +9,7 @@ on:
       - "Makefile"
       - "docs/WORKSPACE_ENVIRONMENT.md"
       - ".github/workflows/delegation-integration-gate.yml"
+      - ".github/workflows/manifest-sign-verify.yml"
       - "docs/PROJECT_DELEGATION_AND_UPSTREAM_WORKSPACE.md"
       - "docs/templates/project-delegation.template.json"
       - "governance/delegations/**"
@@ -25,6 +26,7 @@ on:
       - "Makefile"
       - "docs/WORKSPACE_ENVIRONMENT.md"
       - ".github/workflows/delegation-integration-gate.yml"
+      - ".github/workflows/manifest-sign-verify.yml"
       - "docs/PROJECT_DELEGATION_AND_UPSTREAM_WORKSPACE.md"
       - "docs/templates/project-delegation.template.json"
       - "governance/delegations/**"
@@ -66,6 +68,9 @@ jobs:
           bash -n .devcontainer/post-create.sh
           make -n help > /dev/null
           make -n ci-local > /dev/null
+
+      - name: Parse workflow and issue-form YAML syntax
+        run: ruby -e 'require "yaml"; ARGV.each { |path| YAML.parse_file(path) }' .github/workflows/*.yml .github/ISSUE_TEMPLATE/*.yml
       - name: Validate delegation records
         run: |
           python scripts/validate_project_delegations.py \
