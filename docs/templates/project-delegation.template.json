@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "delegation_id": "ASIG-DEL-0000",
+  "title": "TEMPLATE — replace with a bounded delegation title",
+  "status": "BLOCKED",
+  "request": {
+    "objective": "REPLACE_ME: state the measurable engineering outcome.",
+    "requester": "REPLACE_ME",
+    "created_at": "2026-10-18T00:00:00Z"
+  },
+  "scope": {
+    "repositories": [
+      {
+        "repository_full_name": "vaidt/Kt-ry-Program",
+        "ref": "main"
+      }
+    ],
+    "in_scope": ["REPLACE_ME"],
+    "out_of_scope": ["AURA Protocol normative changes", "target runtime execution", "release or production changes"],
+    "paths_allowed": ["docs/**"],
+    "paths_forbidden": [".github/workflows/**", "src/**", "schemas/**", "main direct pushes"]
+  },
+  "execution": {
+    "implementation_authorized": false,
+    "source_branch": "docs/replace-with-unique-branch",
+    "target_branch": "main",
+    "change_class": "DOCS_ONLY",
+    "pull_request_required": true,
+    "direct_push_permitted": false,
+    "network_side_effects": "NONE"
+  },
+  "authority": {
+    "decision_status": "NOT_PROVEN",
+    "issuer": "",
+    "current_holder": "",
+    "scope": [],
+    "effective_from": "",
+    "valid_until": "",
+    "decision_ref": "",
+    "evidence_refs": [],
+    "normative_effect": "NONE"
+  },
+  "verification": {
+    "required_tests": ["REPLACE_ME"],
+    "results": [],
+    "reviewer_role": "Independent reviewer",
+    "independence_status": "NOT_PROVEN",
+    "evidence_refs": []
+  },
+  "evidence": {
+    "evidence_refs": [],
+    "artifact_names": []
+  },
+  "rollback": {
+    "plan": "REPLACE_ME: describe how to revert the branch or change without bypassing controls.",
+    "trigger_conditions": ["Required check fails", "Scope expands without authorization"]
+  }
+}
