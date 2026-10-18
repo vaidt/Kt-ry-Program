@@ -1,0 +1,158 @@
+AURA / ASIG — RAW CHECKSUM AND SIGSTORE VERIFICATION LOG EXCERPTS
+Source workflow: https://github.com/vaidt/Kt-ry-Program/actions/runs/39038179646
+Workflow job ID: 117412131848 (inventory-reference-sources)
+Source artifact: https://github.com/vaidt/Kt-ry-Program/actions/runs/39038179646/artifacts/12102634225
+Repository: vaidt/Kt-ry-Program
+Workflow commit: 0c50927f85bbee62cee84d0f099d1a220351daf0
+Captured on: 2026-10-17
+
+PROVENANCE AND HANDLING
+The timestamped excerpts below were retrieved from the GitHub Actions job-log API. Lines inside the two excerpt blocks are preserved in their source order; no output line was synthesized. Sections are deliberately excerpted rather than representing the complete runner log. The full workflow log remains available from the run URL above. The complete attestation-verification JSON and Sigstore bundle are included in the original workflow artifact (the artifact ZIP SHA-256 is recorded below).
+
+ARTIFACT ZIP SHA-256
+da72aba23558e5f6abbf0716ade226e926bfab9894fa1c845fb0bcbe3bf58391
+
+SHA256SUMS — EXACT CONTENT FROM THE WORKFLOW ARTIFACT
+6757c50423812b2d6aa973d8d519ac795b956b17e454e2daa1dab3453af5e6d2  asig-ri-py-source-manifest.json
+2d5aa2ada9b5dd71c1325da0471b52138d9db0061e92add0d9f444e258080987  asig-ri-py-source-receipt.json
+4c8438e1657ec7c6ebdd84e3d8d0c20edca0b7faac71cc56295f9fd0860255bc  asig-ri-rs-source-manifest.json
+91a58a6402077a86f6c4899778825e67f8c4ba1e2135f21852075cf4970f2bd5  asig-ri-rs-source-receipt.json
+cabf9d98b95efbe38bef63e49c15aea8fc13297d26a76a0583674937013b91e4  asig-reference-inventory-context.json
+
+WORKFLOW CHECKSUM OUTPUT — RAW TIMESTAMPED LINES
+2026-10-17T13:50:09.7618802Z asig-ri-py-source-manifest.json: OK
+2026-10-17T13:50:09.7619569Z asig-ri-py-source-receipt.json: OK
+2026-10-17T13:50:09.7620267Z asig-ri-rs-source-manifest.json: OK
+2026-10-17T13:50:09.7620858Z asig-ri-rs-source-receipt.json: OK
+2026-10-17T13:50:09.7621410Z asig-reference-inventory-context.json: OK
+
+SIGSTORE ATTESTATION/SIGNING OUTPUT — RAW TIMESTAMPED EXCERPT
+2026-10-17T13:50:09.9683511Z Attestation type: Build Provenance
+2026-10-17T13:50:12.5935875Z Attestation created for asig-reference-source-inventory.tar.gz@sha256:db566b3f576826f01e230fe0a2a8a28ebbc618a1fbcac99050efb14ac840fde4
+2026-10-17T13:50:12.5938402Z ##[group][36mAttestation signed using certificate from Public Good Sigstore instance[39m
+2026-10-17T13:50:12.5939513Z -----BEGIN CERTIFICATE-----
+2026-10-17T13:50:12.5940180Z MIIHXTCCBuOgAwIBAgIUNo/kjlLkfjM5phVndmAxZv6uGqEwCgYIKoZIzj0EAwMw
+2026-10-17T13:50:12.5940685Z NzEVMBMGA1UEChMMc2lnc3RvcmUuZGV2MR4wHAYDVQQDExVzaWdzdG9yZS1pbnRl
+2026-10-17T13:50:12.5941174Z cm1lZGlhdGUwHhcNMjYxMDE3MTM1MDEwWhcNMjYxMDE3MTQwMDEwWjAAMFkwEwYH
+2026-10-17T13:50:12.5941663Z KoZIzj0CAQYIKoZIzj0DAQcDQgAEWRpYWboq30Wc7Bbi6f30C+c1sMttW1ZxcoDN
+2026-10-17T13:50:12.5942143Z m6ZsnJ1RCXlSIBTy9bBMHjdSVee2YGPGgVf3FuXJW2qaBpMzD6OCBgIwggX+MA4G
+2026-10-17T13:50:12.5942660Z A1UdDwEB/wQEAwIHgDATBgNVHSUEDDAKBggrBgEFBQcDAzAfBgNVHSMEGDAWgBTf
+2026-10-17T13:50:12.5943113Z 0+nPViQRlvmo2OkoVaLGLhhkPzB/BgNVHREBAf8EdTBzhnFodHRwczovL2dpdGh1
+2026-10-17T13:50:12.5943574Z Yi5jb20vdmFpZHQvS3QtcnktUHJvZ3JhbS8uZ2l0aHViL3dvcmtmbG93cy9yZWFk
+2026-10-17T13:50:12.5944042Z LW9ubHktcmVmZXJlbmNlLXNvdXJjZS1pbnZlbnRvcnkueW1sQHJlZnMvaGVhZHMv
+2026-10-17T13:50:12.5944495Z bWFpbjA5BgorBgEEAYO/MAEBBCtodHRwczovL3Rva2VuLmFjdGlvbnMuZ2l0aHVi
+2026-10-17T13:50:12.5944976Z dXNlcmNvbnRlbnQuY29tMBIGCisGAQQBg78wAQIEBHB1c2gwNgYKKwYBBAGDvzAB
+2026-10-17T13:50:12.5945463Z AwQoMGM1MDkyN2Y4NWJiZWU2MmNlZTg0ZDBmMDk5ZDFhMjIwMzUxZGFmMDA3Bgor
+2026-10-17T13:50:12.5945935Z BgEEAYO/MAEEBClBU0lHIFJlYWQtb25seSBSZWZlcmVuY2UgU291cmNlIEludmVu
+2026-10-17T13:50:12.5946380Z dG9yeTAhBgorBgEEAYO/MAEFBBN2YWlkdC9LdC1yeS1Qcm9ncmFtMB0GCisGAQQB
+2026-10-17T13:50:12.5946832Z g78wAQYED3JlZnMvaGVhZHMvbWFpbjA7BgorBgEEAYO/MAEIBC0MK2h0dHBzOi8v
+2026-10-17T13:50:12.5947279Z dG9rZW4uYWN0aW9ucy5naXRodWJ1c2VyY29udGVudC5jb20wgYEGCisGAQQBg78w
+2026-10-17T13:50:12.5947739Z AQkEcwxxaHR0cHM6Ly9naXRodWIuY29tL3ZhaWR0L0t0LXJ5LVByb2dyYW0vLmdp
+2026-10-17T13:50:12.5948201Z dGh1Yi93b3JrZmxvd3MvcmVhZC1vbmx5LXJlZmVyZW5jZS1zb3VyY2UtaW52ZW50
+2026-10-17T13:50:12.5948666Z b3J5LnltbEByZWZzL2hlYWRzL21haW4wOAYKKwYBBAGDvzABCgQqDCgwYzUwOTI3
+2026-10-17T13:50:12.5949134Z Zjg1YmJlZTYyY2VlODRkMGYwOTlkMWEyMjAzNTFkYWYwMB0GCisGAQQBg78wAQsE
+2026-10-17T13:50:12.5949860Z DwwNZ2l0aHViLWhvc3RlZDA2BgorBgEEAYO/MAEMBCgMJmh0dHBzOi8vZ2l0aHVi
+2026-10-17T13:50:12.5956935Z LmNvbS92YWlkdC9LdC1yeS1Qcm9ncmFtMDgGCisGAQQBg78wAQ0EKgwoMGM1MDky
+2026-10-17T13:50:12.5957786Z N2Y4NWJiZWU2MmNlZTg0ZDBmMDk5ZDFhMjIwMzUxZGFmMDAfBgorBgEEAYO/MAEO
+2026-10-17T13:50:12.5958511Z BBEMD3JlZnMvaGVhZHMvbWFpbjAaBgorBgEEAYO/MAEPBAwMCjE0MjMyOTI4Mzcw
+2026-10-17T13:50:12.5959241Z KAYKKwYBBAGDvzABEAQaDBhodHRwczovL2dpdGh1Yi5jb20vdmFpZHQwGQYKKwYB
+2026-10-17T13:50:12.5959804Z BAGDvzABEQQLDAkzMjE4NzE5OTIwgYEGCisGAQQBg78wARIEcwxxaHR0cHM6Ly9n
+2026-10-17T13:50:12.5960688Z aXRodWIuY29tL3ZhaWR0L0t0LXJ5LVByb2dyYW0vLmdpdGh1Yi93b3JrZmxvd3Mv
+2026-10-17T13:50:12.5961389Z cmVhZC1vbmx5LXJlZmVyZW5jZS1zb3VyY2UtaW52ZW50b3J5LnltbEByZWZzL2hl
+2026-10-17T13:50:12.5962113Z YWRzL21haW4wOAYKKwYBBAGDvzABEwQqDCgwYzUwOTI3Zjg1YmJlZTYyY2VlODRk
+2026-10-17T13:50:12.5962869Z MGYwOTlkMWEyMjAzNTFkYWYwMBQGCisGAQQBg78wARQEBgwEcHVzaDBaBgorBgEE
+2026-10-17T13:50:12.5963600Z AYO/MAEVBEwMSmh0dHBzOi8vZ2l0aHViLmNvbS92YWlkdC9LdC1yeS1Qcm9ncmFt
+2026-10-17T13:50:12.5964362Z L2FjdGlvbnMvcnVucy8zOTAzODE3OTY0Ni9hdHRlbXB0cy8xMBYGCisGAQQBg78w
+2026-10-17T13:50:12.5965153Z ARYECAwGcHVibGljMFEGCisGAQQBg78wARgEQwxBcmVwbzp2YWlkdEAzMjE4NzE5
+2026-10-17T13:50:12.5965974Z OTIvS3QtcnktUHJvZ3JhbUAxNDIzMjkyODM3OnJlZjpyZWZzL2hlYWRzL21haW4w
+2026-10-17T13:50:12.5966753Z gYkGCisGAQQB1nkCBAIEewR5AHcAdQDdPTBqxscRMmMZHhyZZzcCokpeuN48rf+H
+2026-10-17T13:50:12.5967530Z inKALynujgAAAaFKIJFCAAAEAwBGMEQCIFT/f/tbplYbrSVUZfEnmwVqA4rn0STf
+2026-10-17T13:50:12.5968261Z cp/uAgCcWeuSAiASnnBxRraKKeBs6SzFIUrDM+FRUU8iH03z3XLumo6sJDAKBggq
+2026-10-17T13:50:12.5968979Z hkjOPQQDAwNoADBlAjEAn3i46231A5zs0jmW6fHG9S01QTDDz5O55Yq2dODD7smb
+2026-10-17T13:50:12.5969795Z BYEooKv3UZs4R8q7axYIAjB8j7qx2En+CJg5Y50SoYiqBoZXD3T88EC27roITYk2
+2026-10-17T13:50:12.5970488Z d1tJSR0T7444MWLeR+yf3Gk=
+2026-10-17T13:50:12.5970850Z -----END CERTIFICATE-----
+2026-10-17T13:50:12.5971085Z 
+2026-10-17T13:50:12.5971738Z ##[endgroup]
+2026-10-17T13:50:12.5972456Z [36mAttestation signature uploaded to Rekor transparency log[39m
+2026-10-17T13:50:12.5973109Z https://search.sigstore.dev?logIndex=3295739294
+2026-10-17T13:50:12.5998070Z [36mAttestation uploaded to repository[39m
+2026-10-17T13:50:12.5998628Z https://github.com/vaidt/Kt-ry-Program/attestations/56956562
+2026-10-17T13:50:12.6415634Z ##[group]Run set -euo pipefail
+2026-10-17T13:50:12.6415985Z [36;1mset -euo pipefail[0m
+2026-10-17T13:50:12.6416246Z [36;1mtest -s "$BUNDLE_PATH"[0m
+2026-10-17T13:50:12.6416520Z [36;1mtest -s "$EVIDENCE_ARCHIVE"[0m
+
+SIGSTORE IDENTITY/PROVENANCE VERIFICATION OUTPUT — RAW TIMESTAMPED EXCERPT
+2026-10-17T13:50:12.6415634Z ##[group]Run set -euo pipefail
+2026-10-17T13:50:12.6415985Z [36;1mset -euo pipefail[0m
+2026-10-17T13:50:12.6416246Z [36;1mtest -s "$BUNDLE_PATH"[0m
+2026-10-17T13:50:12.6416520Z [36;1mtest -s "$EVIDENCE_ARCHIVE"[0m
+2026-10-17T13:50:12.6416844Z [36;1mgh attestation verify "$EVIDENCE_ARCHIVE" \[0m
+2026-10-17T13:50:12.6417176Z [36;1m  --repo vaidt/Kt-ry-Program \[0m
+2026-10-17T13:50:12.6417468Z [36;1m  --bundle "$BUNDLE_PATH" \[0m
+2026-10-17T13:50:12.6417969Z [36;1m  --signer-workflow "vaidt/Kt-ry-Program/.github/workflows/read-only-reference-source-inventory.yml" \[0m
+2026-10-17T13:50:12.6418493Z [36;1m  --source-digest "$EXPECTED_ASIG_SHA" \[0m
+2026-10-17T13:50:12.6418818Z [36;1m  --source-ref "$EXPECTED_ASIG_REF" \[0m
+2026-10-17T13:50:12.6419283Z [36;1m  --format json > "$RUNNER_TEMP/asig-reference-inventory-attestation-verification.json"[0m
+2026-10-17T13:50:12.6419744Z [36;1mpython - <<'PY'[0m
+2026-10-17T13:50:12.6420176Z [36;1mimport json, os, pathlib[0m
+2026-10-17T13:50:12.6420532Z [36;1mresults = json.loads([0m
+2026-10-17T13:50:12.6421026Z [36;1m    (pathlib.Path(os.environ["RUNNER_TEMP"]) / "asig-reference-inventory-attestation-verification.json")[0m
+2026-10-17T13:50:12.6421661Z [36;1m    .read_text(encoding="utf-8"))[0m
+2026-10-17T13:50:12.6422152Z [36;1massert isinstance(results, list) and results, "attestation verifier returned no verified statements"[0m
+2026-10-17T13:50:12.6422622Z [36;1mfor item in results:[0m
+2026-10-17T13:50:12.6422936Z [36;1m    verification = item.get("verificationResult", {})[0m
+2026-10-17T13:50:12.6423387Z [36;1m    certificate = verification.get("signature", {}).get("certificate", {})[0m
+2026-10-17T13:50:12.6423829Z [36;1m    timestamps = verification.get("verifiedTimestamps")[0m
+2026-10-17T13:50:12.6424237Z [36;1m    assert certificate, "verified signer certificate is absent"[0m
+2026-10-17T13:50:12.6424774Z [36;1m    assert str(certificate.get("sourceRepositoryIdentifier", "")) == "1423292837", certificate[0m
+2026-10-17T13:50:12.6425332Z [36;1m    assert timestamps, "no cryptographically verified timestamp was returned"[0m
+2026-10-17T13:50:12.6425830Z [36;1mprint("Reference inventory archive attestation verification PASS")[0m
+2026-10-17T13:50:12.6426234Z [36;1mprint("ASIG signer repository ID: 1423292837")[0m
+2026-10-17T13:50:12.6426573Z [36;1mprint("Verified statements:", len(results))[0m
+2026-10-17T13:50:12.6426867Z [36;1mPY[0m
+2026-10-17T13:50:12.6467577Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-17T13:50:12.6467937Z env:
+2026-10-17T13:50:12.6468180Z   EXPECTED_ASIG_REPOSITORY_ID: 1423292837
+2026-10-17T13:50:12.6468498Z   RI_PY_REPOSITORY: vaidt/aura-poc-a-core-v3.3
+2026-10-17T13:50:12.6468798Z   RI_PY_REPOSITORY_ID: 1414456591
+2026-10-17T13:50:12.6469109Z   RI_PY_COMMIT: 1d15ecbed8470476684951e9ff301a3cfc26a46d
+2026-10-17T13:50:12.6469472Z   RI_PY_TREE: 2ada7e80083defab47cea18a2bd81d228685a9e0
+2026-10-17T13:50:12.6469792Z   RI_RS_REPOSITORY: vaidt/aura-guard-v1.3
+2026-10-17T13:50:12.6470212Z   RI_RS_REPOSITORY_ID: 1378273687
+2026-10-17T13:50:12.6470516Z   RI_RS_COMMIT: e0ed7a8b381b725fe65bd86716894bfdf17d3a94
+2026-10-17T13:50:12.6470856Z   RI_RS_TREE: 67e2fc417cf6e2ecf0110e8684db2522d8149071
+2026-10-17T13:50:12.6471211Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.17/x64
+2026-10-17T13:50:12.6471615Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.17/x64/lib/pkgconfig
+2026-10-17T13:50:12.6472019Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.17/x64
+2026-10-17T13:50:12.6472391Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.17/x64
+2026-10-17T13:50:12.6472757Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.17/x64
+2026-10-17T13:50:12.6473131Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.17/x64/lib
+2026-10-17T13:50:12.6475701Z   GH_TOKEN: ***
+2026-10-17T13:50:12.6476133Z   BUNDLE_PATH: /home/runner/work/_temp/0aNEEm/attestation.json
+2026-10-17T13:50:12.6476595Z   EVIDENCE_ARCHIVE: /home/runner/work/_temp/asig-reference-source-inventory.tar.gz
+2026-10-17T13:50:12.6477169Z   EXPECTED_ASIG_SHA: 0c50927f85bbee62cee84d0f099d1a220351daf0
+2026-10-17T13:50:12.6477496Z   EXPECTED_ASIG_REF: refs/heads/main
+2026-10-17T13:50:12.6477757Z ##[endgroup]
+2026-10-17T13:50:16.5816567Z Reference inventory archive attestation verification PASS
+2026-10-17T13:50:16.5817192Z ASIG signer repository ID: 1423292837
+2026-10-17T13:50:16.5817618Z Verified statements: 1
+
+ARTIFACT UPLOAD OUTPUT — RAW TIMESTAMPED LINES
+2026-10-17T13:50:17.3701399Z SHA256 digest of uploaded artifact zip is da72aba23558e5f6abbf0716ade226e926bfab9894fa1c845fb0bcbe3bf58391
+2026-10-17T13:50:17.5868569Z Artifact asig-reference-source-inventory-39038179646.zip successfully finalized. Artifact ID 12102634225
+2026-10-17T13:50:17.5870215Z Artifact asig-reference-source-inventory-39038179646 has been successfully uploaded! Final size is 61105 bytes. Artifact ID is 12102634225
+2026-10-17T13:50:17.5877296Z Artifact download URL: https://github.com/vaidt/Kt-ry-Program/actions/runs/39038179646/artifacts/12102634225
+
+INDEPENDENTLY COMPUTED FILE DIGESTS
+- Signed archive asig-reference-source-inventory.tar.gz SHA-256:
+  db566b3f576826f01e230fe0a2a8a28ebbc618a1fbcac99050efb14ac840fde4
+- Sigstore bundle 0aNEEm/attestation.json SHA-256:
+  d77633636c7bea3564867d24a3b8953d71eedac70e54a3521eed6bb9153967b4
+- Attestation verification JSON SHA-256:
+  149a13e2ea61906b7572e5bc82243dc1460742b7ebcfedf9258497a9313027f9
+
+The SHA256SUMS file covers five evidence payload files. Its entries are distinct from the four canonical JSON self-digests recorded in the manifest/receipt fields. Verification result in the workflow log: "Reference inventory archive attestation verification PASS"; verified statements: 1; signer repository ID: 1423292837.
+
+Scope remains READ_ONLY_SOURCE_INVENTORY_ONLY. This evidence does not claim that RI-PY or RI-RS runtime tests were executed, runtime identity was observed, protocol conformance was established, or release authorization was granted.
