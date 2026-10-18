@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vaidt/Kt-ry-Program/blob/main/schemas/project-delegation.schema.json",
+  "title": "ASIG Project Delegation Record",
+  "description": "Fail-closed delegation record. A valid document describes a task; it does not itself establish legal or protocol authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "delegation_id",
+    "title",
+    "status",
+    "request",
+    "scope",
+    "execution",
+    "authority",
+    "verification",
+    "evidence",
+    "rollback"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "delegation_id": {
+      "type": "string",
+      "pattern": "^ASIG-DEL-[0-9]{4,}$"
+    },
+    "title": { "type": "string", "minLength": 8 },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PROPOSED",
+        "BLOCKED",
+        "AUTHORIZED_FOR_R&D",
+        "IN_PROGRESS",
+        "VERIFICATION_PENDING",
+        "VERIFIED",
+        "REJECTED",
+        "CLOSED"
+      ]
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objective", "requester", "created_at"],
+      "properties": {
+        "objective": { "type": "string", "minLength": 10 },
+        "requester": { "type": "string", "minLength": 1 },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repositories",
+        "in_scope",
+        "out_of_scope",
+        "paths_allowed",
+        "paths_forbidden"
+      ],
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["repository_full_name", "ref"],
+            "properties": {
+              "repository_full_name": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+              "ref": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "in_scope": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "out_of_scope": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "paths_allowed": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "paths_forbidden": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_authorized",
+        "source_branch",
+        "target_branch",
+        "change_class",
+        "pull_request_required",
+        "direct_push_permitted",
+        "network_side_effects"
+      ],
+      "properties": {
+        "implementation_authorized": { "type": "boolean" },
+        "source_branch": { "type": "string", "minLength": 1, "pattern": "^(?!main$).+" },
+        "target_branch": { "type": "string", "minLength": 1 },
+        "change_class": {
+          "type": "string",
+          "enum": [
+            "DOCS_ONLY",
+            "CI_SECURITY_CONTROL",
+            "NON_AUTHORITATIVE_RND",
+            "PROTOCOL_NORMATIVE",
+            "RUNTIME_TARGET",
+            "RELEASE_PRODUCTION"
+          ]
+        },
+        "pull_request_required": { "const": true },
+        "direct_push_permitted": { "const": false },
+        "network_side_effects": {
+          "type": "string",
+          "enum": ["NONE", "READ_ONLY_ONLY", "REQUIRES_SEPARATE_REVIEW"]
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_status",
+        "issuer",
+        "current_holder",
+        "scope",
+        "effective_from",
+        "valid_until",
+        "decision_ref",
+        "evidence_refs",
+        "normative_effect"
+      ],
+      "properties": {
+        "decision_status": { "type": "string", "enum": ["NOT_PROVEN", "PROVEN"] },
+        "issuer": { "type": "string" },
+        "current_holder": { "type": "string" },
+        "scope": { "type": "array", "items": { "type": "string" } },
+        "effective_from": { "type": "string" },
+        "valid_until": { "type": "string" },
+        "decision_ref": { "type": "string" },
+        "evidence_refs": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "normative_effect": { "const": "NONE" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_tests",
+        "results",
+        "reviewer_role",
+        "independence_status",
+        "evidence_refs"
+      ],
+      "properties": {
+        "required_tests": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["test_id", "status", "evidence_ref"],
+            "properties": {
+              "test_id": { "type": "string", "minLength": 1 },
+              "status": { "type": "string", "enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"] },
+              "evidence_ref": { "type": "string" }
+            }
+          }
+        },
+        "reviewer_role": { "type": "string", "minLength": 1 },
+        "independence_status": { "type": "string", "enum": ["PROVEN", "NOT_PROVEN", "NOT_APPLICABLE"] },
+        "evidence_refs": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_refs", "artifact_names"],
+      "properties": {
+        "evidence_refs": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "artifact_names": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plan", "trigger_conditions"],
+      "properties": {
+        "plan": { "type": "string", "minLength": 10 },
+        "trigger_conditions": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution": {
+            "properties": { "implementation_authorized": { "const": true } },
+            "required": ["implementation_authorized"]
+          }
+        },
+        "required": ["execution"]
+      },
+      "then": {
+        "properties": {
+          "status": { "enum": ["AUTHORIZED_FOR_R&D", "IN_PROGRESS", "VERIFICATION_PENDING", "VERIFIED"] },
+          "execution": {
+            "properties": {
+              "change_class": { "enum": ["DOCS_ONLY", "CI_SECURITY_CONTROL", "NON_AUTHORITATIVE_RND"] },
+              "pull_request_required": { "const": true },
+              "direct_push_permitted": { "const": false }
+            }
+          },
+          "authority": {
+            "properties": {
+              "decision_status": { "const": "PROVEN" },
+              "issuer": { "minLength": 1 },
+              "current_holder": { "minLength": 1 },
+              "scope": { "minItems": 1 },
+              "effective_from": { "format": "date-time" },
+              "valid_until": { "format": "date-time" },
+              "decision_ref": { "minLength": 1 },
+              "evidence_refs": { "minItems": 1 },
+              "normative_effect": { "const": "NONE" }
+            },
+            "required": [
+              "decision_status",
+              "issuer",
+              "current_holder",
+              "scope",
+              "effective_from",
+              "valid_until",
+              "decision_ref",
+              "evidence_refs",
+              "normative_effect"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "VERIFIED" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "verification": {
+            "properties": {
+              "independence_status": { "const": "PROVEN" },
+              "evidence_refs": { "minItems": 1 }
+            }
+          },
+          "evidence": { "properties": { "evidence_refs": { "minItems": 1 } } }
+        }
+      }
+    }
+  ]
+}
