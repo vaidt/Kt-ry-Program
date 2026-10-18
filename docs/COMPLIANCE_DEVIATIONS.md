@@ -88,3 +88,68 @@ This is a **single-use, time-bounded exception** only for PR #11. It does not wa
 
 The post-merge read-back now confirms that `enforce_admins.enabled = true` and that the expected review/status-check settings are present. However, neither the screenshot nor the available PR metadata establishes whether enforcement was temporarily disabled, when it was restored, or whether the prescribed sequence occurred exactly as written. Do not infer an immediate restore from a later `true` value. The source screenshot is now committed at `docs/evidence/BRANCH_PROTECTION_READBACK_2026-10-18.jpeg`; the evidence record documents the GitHub-returned byte count, Git blob SHA, and matching SHA-256. Its capture date/time and timezone are not independently attested. `NC-ASIG-2026-10-17-PR10` remains **OPEN** and Etap 3 remains **BLOCKED** pending person-level independence disposition (NOT PROVEN / ELEVATED RISK based on correlated public review activity) and independent corroboration of the historical break-glass sequence. Record no unverified transition times.
 
+
+
+---
+
+## 8. NC-ASIG-2026-10-18-PR30 — Merge with pre-merge governance evidence gaps
+
+**Status:** OPEN — process / authorization disposition required  
+**Classification:** Process nonconformity — closure of required pre-merge evidence gates not demonstrated; physical human operator and intent NOT PROVEN  
+**Detection date:** 2026-10-18  
+**Affected repository:** `vaidt/Kt-ry-Program`  
+**Related PR:** [#30 — fix(ci): pin workflow actions to immutable SHAs](https://github.com/vaidt/Kt-ry-Program/pull/30)  
+**Related prior deviation:** `NC-ASIG-2026-10-17-PR10` (remains OPEN)  
+**Related corrective follow-up:** [PR #31 — fix(pages): pin transitive artifact upload dependency](https://github.com/vaidt/Kt-ry-Program/pull/31)
+
+### 8.1 Deviation statement
+
+PR #30 was merged while its documented pre-merge conditions were not all demonstrably closed by the available evidence. The PR description required an independent review and appropriate disposition of the Pages validation limitation and remaining SHA-pinning scope. GitHub recorded one `APPROVED` review, but independent human-controller status remains **NOT PROVEN** under PA-07. The PR description also stated that the Pages workflow had not been safely executed on the branch; no approved alternative disposition before merge is evidenced in the reviewed records.
+
+This finding classifies a process/evidence nonconformity. It does not determine intent, establish who physically operated the session, or assert that the same human controlled the distinct GitHub accounts.
+
+### 8.2 Objective platform evidence
+
+- [PR #30 API](https://api.github.com/repos/vaidt/Kt-ry-Program/pulls/30) records `merged = true`, `merged_at = 2026-10-18T14:48:05Z`, `merged_by.login = vaidt`, author account `vaidt`, reviewed head `f8ed0c07ef22045c84f178d3638ae22409658644`, base SHA `d2ed5821412ba69e4a7294fb832bd2da5fa92002`, and merge commit `ac0e10b1f16ac7f3f30f3c33bffcc6b883501f8b`.
+- [PR #30 event timeline](https://api.github.com/repos/vaidt/Kt-ry-Program/issues/30/events) records the `merged` event at `2026-10-18T14:48:05Z` with actor login `vaidt` and platform account ID `321871992`.
+- [Review event](https://github.com/vaidt/Kt-ry-Program/pull/30#pullrequestreview-5563161452) records `APPROVED` by `kamilkrasinski4-sys` at `2026-10-18T13:22:44Z` on the same head SHA. This establishes a platform review event, not human-controller independence.
+- Sixteen check-run records on the PR head reported `success`. These results establish technical check outcomes only; they do not establish governance authorization.
+- The production Pages workflow [run 39137615992](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137615992) failed during job setup shortly after merge; its deploy job was skipped. The runner log reports that nested `actions/upload-artifact@v4` was rejected because the repository requires full-length SHA pins.
+- A later isolated build-only workflow on the corrective branch passed actionlint, Jekyll build, non-empty-site verification and artifact upload. That later result does not retroactively close a pre-merge gate for PR #30.
+
+### 8.3 Platform actor versus physical operator
+
+**Verified:** GitHub attributed the merge event to the account `vaidt` (ID `321871992`).  
+**NOT PROVEN:** the natural person who physically operated the session, whether credentials/session access were delegated, or whether the account operator had the required decision authority for this action.
+
+The available public PR/event API evidence identifies a platform account; it does not identify a physical human controller. No person-level attribution shall be inferred from the account login, commit author, or GitHub `web-flow` committer metadata. Any further attribution requires independent, appropriately authorized audit evidence. If no such evidence is available, the human-controller determination remains **NOT PROVEN**.
+
+### 8.4 Cause and contributing conditions
+
+- **Observed control gap:** the documented merge gates were not all supported by closed evidence before merge.
+- **Contributing condition:** platform mergeability and successful CI checks were treated as sufficient operational signals despite unresolved reviewer independence and unverified Pages workflow execution.
+- **Governance boundary:** the repository's [AURA-STAGE3-AUTH-001](governance/AURA-STAGE3-AUTH-001.md) records competent authority as `NOT ESTABLISHED — G1 BLOCKED`, normative effect `NONE`, and implementation/conformance/release authorization `NOT GRANTED`. This deviation does not create, ratify or imply any missing authority.
+
+### 8.5 Correction and preventive actions
+
+| ID | Action | Acceptance evidence | Status |
+|---|---|---|---|
+| CA-30-01 | Add this event to the controlled deviation register and preserve the source references and exact SHAs. | This section plus linked PR/event/check/workflow records. | RECORDED |
+| CA-30-02 | Preserve the Pages failure and corrective investigation without modifying `main` directly. | [Failure run 39137615992](https://github.com/vaidt/Kt-ry-Program/actions/runs/39137615992); [corrective PR #31](https://github.com/vaidt/Kt-ry-Program/pull/31). | EVIDENCE RECORDED; CORRECTION REVIEW OPEN |
+| PA-30-01 | Maintain an administrative hold on subsequent merges pending competent decision-authority evidence (G1), a reviewer meeting the project's SoD standard, and explicit disposition of any untested workflow. | Written competent-owner decision, verified authority-chain evidence, and independent review evidence on the exact candidate HEAD. | OPEN / NOT PROVEN |
+| PA-30-02 | For PR #31, require an independent review of the direct artifact-packaging substitution and passing required checks on its exact final HEAD. | Review findings/disposition, exact-head check results, and post-merge Pages run if/when an authorized merge is permitted. | OPEN |
+| EV-30-01 | Determine whether available authorized account/platform audit evidence can establish the human session operator. | Evidence source and method must be recorded; do not infer the human from the GitHub login. | NOT PROVEN |
+| EV-30-02 | Assess whether a revert or other corrective action for PR #30 is required. | Decision by a competent authority with rationale, risk assessment, and controlled implementation plan. | NOT DECIDED; NO REVERT AUTHORIZED BY THIS RECORD |
+
+### 8.6 Closure criteria
+
+`NC-ASIG-2026-10-18-PR30` remains **OPEN** until:
+
+1. The competent owner records a reasoned disposition of the merge-gate deviation.
+2. G1 / decision competence is established through the project's applicable authority mechanism; this record itself is not constitutive authority.
+3. Reviewer independence is evidenced to the project's SoD standard, or the competent process owner explicitly records a permitted alternative that does not falsely claim independent peer review.
+4. PR #31's corrective change receives its own independent review and required checks, and the Pages production workflow is verified on the resulting exact `main` SHA after any authorized merge.
+5. Any decision about human-controller attribution and any revert/corrective action is recorded with evidence and rationale.
+6. Post-change ruleset and required-check state is re-read and retained.
+
+This record does not retroactively authorize PR #30, create a missing review, or establish AURA runtime qualification, protocol conformance, release readiness, or CAPA closure. The platform fact `merged = true` is kept distinct from the governance disposition **OPEN / NOT PROVEN**.
