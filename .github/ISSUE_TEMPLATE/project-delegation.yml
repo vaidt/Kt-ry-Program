@@ -1,0 +1,108 @@
+name: Project Delegation Request
+description: Propose a bounded task with acceptance criteria and evidence. Submitting this form does not authorize execution.
+title: "[DELEGATION] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Control boundary:** this form opens a proposal only. Implementation remains unauthorized until the required authority evidence is reviewed and a delegation record is explicitly approved. Do not include secrets or credentials.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective and measurable outcome
+      description: State the problem, expected output, and observable success condition.
+      placeholder: One bounded outcome; avoid open-ended assignments.
+    validations:
+      required: true
+  - type: input
+    id: repository
+    attributes:
+      label: Target repository
+      description: Use owner/repository form.
+      value: vaidt/Kt-ry-Program
+    validations:
+      required: true
+  - type: input
+    id: source_ref
+    attributes:
+      label: Exact source branch, tag, or commit
+      placeholder: main or a full commit SHA
+    validations:
+      required: true
+  - type: input
+    id: target_branch
+    attributes:
+      label: Proposed PR target branch
+      placeholder: Existing branch only; do not recreate integration without authorization.
+    validations:
+      required: true
+  - type: dropdown
+    id: change_class
+    attributes:
+      label: Requested change class
+      description: The ASIG gate may authorize only documentation, CI/security controls, or non-authoritative R&D.
+      options:
+        - PROPOSED — DOCS_ONLY
+        - PROPOSED — CI_SECURITY_CONTROL
+        - PROPOSED — NON_AUTHORITATIVE_RND
+        - BLOCKED — PROTOCOL_NORMATIVE
+        - BLOCKED — RUNTIME_TARGET
+        - BLOCKED — RELEASE_PRODUCTION
+    validations:
+      required: true
+  - type: textarea
+    id: allowed_paths
+    attributes:
+      label: Allowed files or path patterns
+      placeholder: docs/**; list exact paths where possible
+    validations:
+      required: true
+  - type: textarea
+    id: forbidden_scope
+    attributes:
+      label: Out-of-scope work and forbidden paths
+      description: Explicitly list exclusions, sensitive boundaries, and operations not permitted.
+      value: "No direct push to protected branches. No scope expansion. No normative AURA Protocol changes, target-runtime execution, release, or production actions without a separate competent authorization."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria and required tests
+      placeholder: Numbered, objectively checkable criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: authority_evidence
+    attributes:
+      label: Authority and decision evidence references
+      description: Link the issuer, current holder, authority scope, effective dates, and constitutive decision. If unavailable, state NOT PROVEN.
+      value: "NOT PROVEN — no implementation authorization requested by this form."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence_plan
+    attributes:
+      label: Evidence to preserve
+      description: Include exact commit refs, test run URLs, artifact names/hashes, and verification source.
+    validations:
+      required: true
+  - type: dropdown
+    id: independence
+    attributes:
+      label: Reviewer independence status
+      description: Separate GitHub accounts alone do not establish separate human control or independent judgment.
+      options:
+        - NOT PROVEN
+        - PROVEN — attach evidence
+        - NOT APPLICABLE — explain in the record
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback plan and triggers
+      placeholder: Explain how the change is reverted and which objective conditions trigger rollback.
+    validations:
+      required: true
