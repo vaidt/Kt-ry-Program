@@ -81,8 +81,44 @@ jobs:
           python -m venv .venv
           .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip
           .venv/bin/python -m pip install --disable-pip-version-check ".[canonical]" pip-audit==2.10.1
-      - name: Audit dependencies declared by the local project
-        run: .venv/bin/pip-audit ".[canonical]" --strict --progress-spinner off
+      - name: Resolve project dependencies including the canonical extra
+        env:
+          REPORT_PATH: ${{ runner.temp }}/asig-dependency-resolution.json
+          REQUIREMENTS_PATH: ${{ runner.temp }}/asig-runtime-requirements.txt
+        run: |
+          set -euo pipefail
+          python -m pip install --dry-run --ignore-installed --report "$REPORT_PATH" ".[canonical]"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(Path(os.environ["REPORT_PATH"]).read_text(encoding="utf-8"))
+          pinned = {}
+          local_project = "aura-source-identity-gate"
+          for item in report.get("install", []):
+              metadata = item.get("metadata", {})
+              name = metadata.get("name")
+              version = metadata.get("version")
+              if not isinstance(name, str) or not isinstance(version, str):
+                  raise SystemExit("dependency resolution report has a missing name/version")
+              normalized = name.lower().replace("_", "-").replace(".", "-")
+              if normalized == local_project:
+                  continue
+              prior = pinned.get(normalized)
+              if prior is not None and prior != (name, version):
+                  raise SystemExit(f"conflicting resolved versions for {name}")
+              pinned[normalized] = (name, version)
+          if not pinned:
+              raise SystemExit("dependency resolution report contained no external packages")
+          lines = [f"{name}=={version}" for name, version in sorted(pinned.values(), key=lambda row: row[0].lower())]
+          Path(os.environ["REQUIREMENTS_PATH"]).write_text("\\n".join(lines) + "\\n", encoding="utf-8")
+          print(f"Generated {len(lines)} pinned runtime/extra dependency requirements.")
+          PY
+      - name: Audit project dependencies including canonical extra
+        env:
+          REQUIREMENTS_PATH: ${{ runner.temp }}/asig-runtime-requirements.txt
+        run: .venv/bin/pip-audit --requirement "$REQUIREMENTS_PATH" --no-deps --strict --progress-spinner off
       # Keep the license gate inside this existing required status context:
       # ruleset 25306960 already requires python-dependency-audit. Do not change
       # the required-check contract just to run this validation-only negative control.
