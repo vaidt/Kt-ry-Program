@@ -2,7 +2,7 @@ name: ASIG CI
 
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "infra/**", integration]
   pull_request:
   workflow_dispatch:
 
