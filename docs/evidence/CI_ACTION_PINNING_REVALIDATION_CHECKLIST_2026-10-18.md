@@ -5,7 +5,8 @@
 **Incident run:** [39130015871](https://github.com/vaidt/Kt-ry-Program/actions/runs/39130015871)  
 **Affected source commit:** `d2ed5821412ba69e4a7294fb832bd2da5fa92002`  
 **Remediation branch:** `infra/pin-actions-sha-failure-39130015871`  
-**Status:** PATCH PREPARED · EXECUTION EVIDENCE PENDING · NOT MERGED
+**Verified test head before this evidence update:** `9c1fa773e181e6162165be02fac60b7c9659cf29`  
+**Status:** PATCH PREPARED · CI PASS ON TESTED HEAD · INDEPENDENT REVIEW PENDING · NOT MERGED
 
 ## 1. Incident evidence
 
@@ -36,7 +37,7 @@ Replaced moving tags with 40-character commit SHAs:
 | `actions/upload-artifact` (v4 line) | `ea165f8d65b6e75b540449e92b4886f43607fa02` |
 | `dtolnay/rust-toolchain` | `683b588c487a69d01f6c6ddf40f036ff682cc2c8` |
 
-The Rust action is pinned to a commit on the author's `master` history and has the explicit input `toolchain: stable`. This preserves the intended Rust stable toolchain while satisfying SHA pinning.
+The Rust action is pinned to a commit in the author's `master` history and uses the explicit input `toolchain: stable`. This preserves the intended Rust stable toolchain while satisfying SHA pinning.
 
 Preserved workflow contract:
 - Python matrix 3.11, 3.12, 3.13
@@ -67,9 +68,29 @@ The SHAs above were resolved using the official GitHub API references for the co
 
 This documents source resolution; it is not a cryptographic verification of the upstream maintainers' signing identity. Action execution on the branch remains required.
 
-## 4. Revalidation checklist
+## 4. Revalidation results
 
-Mark each item only after evidence is available.
+The branch diff against `main` was inspected. It contains exactly these three intended paths:
+- `.github/workflows/ci.yml`
+- `.github/workflows/jekyll-gh-pages.yml`
+- `docs/evidence/CI_ACTION_PINNING_REVALIDATION_CHECKLIST_2026-10-18.md`
+
+The two workflow files were checked for action-reference syntax: all 13 `uses:` references in these two files end in full 40-character hexadecimal SHAs. The GitHub Actions runner successfully parsed and executed `ci.yml`; a separate `actionlint` execution was not performed in this environment.
+
+### Successful execution evidence
+
+| Run / job | Tested head | Result |
+|---|---|---|
+| [ASIG CI run #199](https://github.com/vaidt/Kt-ry-Program/actions/runs/39130751252) | `9c1fa773e181e6162165be02fac60b7c9659cf29` | **SUCCESS** |
+| `test-and-build (3.11)` | same | **PASS**, unit tests ran (21 tests), package build and artifact upload passed |
+| `test-and-build (3.12)` | same | **PASS**, unit tests ran (21 tests) and package build passed |
+| `test-and-build (3.13)` | same | **PASS**, unit tests ran (21 tests) and package build passed |
+| `runtime-adapter-integration` | same | **PASS**, runtime contract tests ran (7 tests) |
+| [ASIG Security Controls run #79](https://github.com/vaidt/Kt-ry-Program/actions/runs/39130751381) | same | **SUCCESS** — secret scan, dependency/license audit, and CodeQL completed successfully |
+
+The above results apply to the exact tested head listed in the table. This evidence document is being updated in a subsequent commit; GitHub must run CI again for the resulting updated branch head, and the final PR must have passing checks on its exact head SHA before merge.
+
+### Remaining verification
 
 - [x] Create a remediation branch from `main`; do not modify `main` directly.
 - [x] Pin all action references involved in the four failed required check jobs.
@@ -77,27 +98,32 @@ Mark each item only after evidence is available.
 - [x] Preserve Python 3.11–3.13 matrix and Node.js 22 setup.
 - [x] Preserve least-privilege permissions and existing `persist-credentials: false`.
 - [x] Confirm action refs came from official upstream GitHub API refs/commit records.
-- [ ] Verify the branch diff contains only the intended workflow changes plus this checklist.
-- [ ] Run a YAML/workflow static validator (preferably `actionlint`) against both workflow files.
-- [ ] Confirm `uses:` refs in these two files all match a full 40-character SHA.
-- [ ] Observe a new branch-triggered CI run and confirm all four required jobs get past action setup.
-- [ ] Verify Python 3.11, 3.12 and 3.13 jobs actually execute unit tests and package builds.
-- [ ] Verify runtime adapter tests actually execute and record their result.
-- [ ] Dispatch or otherwise validate the Pages workflow against this branch without deploying to production; if the available workflow mechanism cannot test it safely, record that limitation.
-- [ ] Confirm new required check results are attached to the exact remediation head SHA.
-- [ ] Obtain the required independent review and follow normal merge controls; do not bypass rules.
-- [ ] After merge, verify the exact resulting `main` SHA and required-check results.
+- [x] Inspect the three-path diff against `main`.
+- [x] Confirm `uses:` refs in the two changed workflow files all match a full 40-character SHA.
+- [x] Confirm all four required jobs got past action setup and ran tests on the tested head.
+- [x] Confirm secret scan, dependency/license audit and CodeQL completed on the tested head.
+- [ ] Confirm required checks pass on the final updated branch head and PR head SHA.
+- [ ] Run a separate YAML/workflow static validator (preferably `actionlint`); GitHub's successful `ci.yml` execution is not represented as an `actionlint` result.
+- [ ] Validate the Pages workflow safely on the proposed ref without a production deployment, or explicitly document an approved alternative. This workflow has not been executed in this remediation.
+- [ ] Obtain an independent review from a reviewer other than the change preparer; this assistant's technical pre-review is not independent human approval.
+- [ ] Merge only through normal repository review and required-check controls.
+- [ ] After merge, verify the exact resulting `main` SHA and its required-check results.
 
 ## 5. Scope limitation
 
-The patch is targeted at the failing workflows observed for this incident. The current repository also has mutable action tags in other workflows, including the read-only pilot, reference-source inventory, and release workflows. They were not changed in this minimal incident patch and must not be described as repo-wide SHA-pinning compliant. If the policy is enforced uniformly for all workflows, track those files as a separate follow-up before their next execution.
+The patch is targeted at the failing workflows observed for this incident. The current repository also has mutable action tags in other workflows, including the read-only pilot, reference-source inventory, and release workflows. They were not changed in this incident patch and must not be described as repo-wide SHA-pinning compliant. If the policy is enforced uniformly for all workflows, track those files as a separate follow-up before their next execution.
+
+A non-blocking Node.js 20 deprecation warning was observed in the successful run for some pinned actions, which GitHub said were being forced to run on Node.js 24. This did not fail the run but should be considered in a separate action-version compatibility review.
 
 ## 6. Current disposition
 
 - Workflow patch: **PREPARED ON A SEPARATE BRANCH**
-- Application tests on patched workflow: **NOT YET PROVEN BY THIS CHECKLIST**
+- ASIG CI on tested head: **PASS; evidence above**
+- Current updated head / PR head: **MUST BE REVALIDATED**
+- Pages workflow on remediation branch: **NOT EXECUTED**
+- Independent review: **PENDING**
 - Merge to `main`: **NOT PERFORMED**
 - Branch protection / ruleset mutations: **NONE**
-- Incident closure: **OPEN pending execution evidence**
+- Incident closure: **OPEN pending final-head CI, independent review, and required process**
 
-A successful action-initialization phase alone is insufficient. Close this remediation only after the jobs execute the actual test commands and the results are tied to the exact reviewed commit.
+A successful action-initialization phase alone is insufficient. The reviewed PR head must have passing required checks and an independent review; the remaining Pages and repository-wide pinning scope limitations must remain explicit.
