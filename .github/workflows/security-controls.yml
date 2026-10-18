@@ -112,7 +112,7 @@ jobs:
           if not pinned:
               raise SystemExit("dependency resolution report contained no external packages")
           lines = [f"{name}=={version}" for name, version in sorted(pinned.values(), key=lambda row: row[0].lower())]
-          Path(os.environ["REQUIREMENTS_PATH"]).write_text("\\n".join(lines) + "\\n", encoding="utf-8")
+          Path(os.environ["REQUIREMENTS_PATH"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
           print(f"Generated {len(lines)} pinned runtime/extra dependency requirements.")
           PY
       - name: Audit project dependencies including canonical extra
