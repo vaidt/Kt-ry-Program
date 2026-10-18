@@ -52,6 +52,50 @@ The independently read repository ruleset is also active and requires the same f
 4. The result does not establish legal identity or whether distinct GitHub accounts are controlled by distinct humans.
 5. It does not establish runtime qualification, protocol conformance, release readiness, or CAPA closure.
 
+
+
+## Reviewer-account independence assessment — supplemental public evidence
+
+### Account metadata observed
+
+The public GitHub user endpoints were read during this review. The public fields below are platform metadata, not verified civil identity:
+
+| Field | `kamilkrasinski4-sys` | `Kamil1230xd` |
+|---|---|---|
+| GitHub user ID | `243464820` | `170595912` |
+| Account creation time | `2025-11-12T01:52:58Z` | `2024-05-23T04:08:32Z` |
+| Public repositories | 4 | 23 |
+| Public name / email / bio / company | Not populated | Not populated |
+| Current repository collaborator check | `true` | `true` |
+
+The first account's public repositories are Aura-related repositories, including `aura-specification`, `aura-poc-a-core-v3.3`, and `aura-guard-v1.3`, plus `aura-p0-0-toolchain`. The second account's public repositories include Aura-related projects such as `aura-idtoken`, `aura-sign-mvp`, `aura-cloudrun`, and `Aura`. The account creation dates and repository portfolios differ, but these differences do not prove distinct human controllers.
+
+### Correlated review-event pattern
+
+Public event feeds show the two accounts reviewing the same pull-request heads in repeated, close succession on 2026-10-18. Examples include:
+
+| PR | First observed account event | Second observed account event | Difference |
+|---|---|---|---:|
+| #11 | `kamilkrasinski4-sys` — 09:02:35Z | `Kamil1230xd` — 09:03:01Z | 26 seconds |
+| #22 | `Kamil1230xd` — 08:54:28Z | `kamilkrasinski4-sys` — 08:55:02Z | 34 seconds |
+| #27 | `Kamil1230xd` — 08:45:02Z | `kamilkrasinski4-sys` — 08:46:13Z | 71 seconds |
+| #23 | `kamilkrasinski4-sys` — 07:26:32Z | `Kamil1230xd` — 07:27:19Z | 47 seconds |
+| #25 | `Kamil1230xd` — 06:20:37Z | `kamilkrasinski4-sys` — 06:21:35Z | 58 seconds |
+
+The public events also show closely spaced, mirrored review/dismissal activity on PR #27: dismissal events at 07:49:47Z and 07:50:17Z, further dismissals at 07:57:30Z and 07:58:30Z, and approvals at 08:45:02Z and 08:46:13Z. Times are from public event objects, which may be recorded a few seconds after the underlying review submission. The specific PR #11 review API remains the authoritative source for its approval submissions and reviewed head.
+
+These temporal correlations do **not** prove the accounts share an operator. They are, however, a material audit signal: the pattern is consistent with coordinated dual-account activity and cannot be treated as affirmative evidence of independent human review. Both accounts' publicly exposed name, email, bio and company fields are unpopulated, so the reviewed public metadata supplies no corroborating person-level distinction.
+
+### Finding and required disposition
+
+- GitHub platform events: **PASS** — two distinct user IDs submitted approvals to PR #11 before merge.
+- Separate-account status: **PASS** — the platform records different account IDs.
+- Separate human controllers / independent judgment: **NOT PROVEN**.
+- Risk disposition: **ELEVATED / OPEN** until the project obtains evidence outside these GitHub account events that satisfies its segregation-of-duties criterion. Suitable evidence may include a documented, auditable attestation by the responsible individuals and an independently verified organizational identity/role link; the exact acceptable evidence standard is for the CAPA owner to define. Do not infer identity from profile names, repository history, timing, or the accounts' availability as connected integrations.
+
+This section does not accuse either account of misconduct and does not conclude that the same person controls both. It records that the available evidence is insufficient to accept the independence claim.
+
+
 ## Related pull request sequence
 
 - PR #11: https://github.com/vaidt/Kt-ry-Program/pull/11
