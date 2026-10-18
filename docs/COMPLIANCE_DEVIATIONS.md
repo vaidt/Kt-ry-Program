@@ -35,13 +35,13 @@ The change merged by PR #10 was limited to the documentation file `docs/REFERENC
 |---|---|---|---|
 | CA-01 | Record this deviation in version-controlled documentation. | This register is included in the remediation PR. | Implemented in PR #11 |
 | PA-01 | Require a pull request and at least one approving review on `main`. | GitHub branch-protection readback reports `required_approving_review_count = 1`. | Implemented; verified by API |
-| PA-02 | Enforce the branch rules for administrators. | Readback reports `enforce_admins.enabled = true`. | Implemented; verified by API |
+| PA-02 | Enforce the branch rules for administrators. | Readback reports `enforce_admins.enabled = true`; see [branch-protection read-back evidence](evidence/BRANCH_PROTECTION_READBACK_2026-10-18.md). | PASS for current observed state on 2026-10-18; exact UTC capture time and historical restore time are not attested. |
 | PA-03 | Require all CI contexts that protect merge readiness. | Required contexts: `test-and-build (3.11)`, `test-and-build (3.12)`, `test-and-build (3.13)`, `runtime-adapter-integration`; strict up-to-date requirement enabled. | Implemented; verified by API |
 | PA-04 | Reject force pushes and deletion of `main`. | Readback reports `allow_force_pushes.enabled = false` and `allow_deletions.enabled = false`. | Implemented; verified by API |
 | PA-05 | Dismiss stale approvals when new commits are pushed; require conversation resolution. | Readback reports `dismiss_stale_reviews = true` and `required_conversation_resolution.enabled = true`. | Implemented; verified by API |
 | PA-06 | Attach reproducible checksum and Sigstore evidence from the original run. | Complete five-entry `SHA256SUMS`, raw timestamped workflow log excerpts, artifact/attestation digests, and source run link are recorded in the remediation PR. | Implemented in PR #11 |
-| PA-07 | Require genuine independent peer review of this remediation PR. | A reviewer other than the PR author/merger submits an `APPROVED` review; required CI contexts pass before merge. | Pending external reviewer |
-| EV-01 | Test the amended preventative controls with this PR. | PR #11 remains unmerged until the branch protection gate and independent review are satisfied; no administrative/bypass merge. | Pending CI and independent approval |
+| PA-07 | Require genuine independent peer review of this remediation PR. | GitHub records two `APPROVED` events before merge by accounts `kamilkrasinski4-sys` (09:02:35Z) and `Kamil1230xd` (09:03:01Z), on reviewed head `aa77c86d5d27a1155fee192d5e2602a1fef30bcd`; both accounts differ from PR author/merger `vaidt`. See [PR #11 review 1](https://github.com/vaidt/Kt-ry-Program/pull/11#pullrequestreview-5562221365) and [PR #11 review 2](https://github.com/vaidt/Kt-ry-Program/pull/11#pullrequestreview-5562222625). | PARTIALLY EVIDENCED — approval events PASS; distinct account names/IDs are recorded, but the available evidence does not establish distinct human controllers or substantive independence. |
+| EV-01 | Test the amended preventative controls with this PR. | PR #11 was merged at `2026-10-18T09:03:25Z` as `8266ab94d797d97619fbd2fa2a9c74ec4ea485fd`. Nine check-runs on reviewed head `aa77c86d5d27a1155fee192d5e2602a1fef30bcd` report `success`; the four required contexts completed before merge. Two GitHub `APPROVED` events were recorded before merge. The post-merge read-back confirms the expected protection settings, including `enforce_admins.enabled = true`; see [read-back evidence](evidence/BRANCH_PROTECTION_READBACK_2026-10-18.md). | PARTIALLY VERIFIED — required check/review events and current configuration are evidenced; execution of the documented temporary disable/restore sequence and exact UTC transition times are not independently evidenced. Do not infer either normal-path merge or break-glass execution from the current state alone. |
 
 ### 5. CAPA closure criteria
 
@@ -64,14 +64,14 @@ This record does not retroactively create a review for PR #10, does not characte
 ## 7. Documented break-glass exception — PR #11
 
 **Exception ID:** `BG-ASIG-2026-10-17-PR11`  
-**Status before execution:** AUTHORIZED BY REPOSITORY OWNER — EXECUTION AND POST-CHECK PENDING  
+**Status after current read-back:** CURRENT PROTECTION STATE VERIFIED; HISTORICAL DISABLE/RESTORE SEQUENCE NOT PROVEN  
 **Scope:** PR #11 only; documentation and audit evidence only.
 
-The repository owner has authorized a narrowly scoped administrator override for merging PR #11 after successful required CI, because no secondary human reviewer is available in this working environment. The purpose is to merge the CAPA record and source evidence, not to authorize runtime work or release activity.
+PR #11's body documents authorization for a narrowly scoped administrator override. That authorization is not, by itself, evidence that the override was executed. Subsequent GitHub records show two `APPROVED` review events on the reviewed PR head before merge (see links in PA-07). The available source establishes that the accounts differ from `vaidt`, but it does not establish that the accounts were controlled by distinct humans. This record preserves the distinction between recorded platform events and unresolved person-level independence.
 
 ### 7.1 Review classification and transparency
 
-An AI-assisted review was performed out-of-band in this conversation. It is **not** a GitHub `APPROVED` review, is not a review by a separate human actor, and does not satisfy the normal independent-review control. No GitHub identity or review event is attributed to the AI auditor. The decision to proceed is recorded as a documented administrative exception, rather than misrepresented as an independent human approval.
+An AI-assisted review was performed out-of-band in this conversation. It is **not** a GitHub `APPROVED` review and no GitHub identity or review event is attributed to the AI auditor. This statement concerns the AI review only; it does not negate the two separately recorded GitHub `APPROVED` events linked above. Whether those events satisfy genuine person-level independence remains unresolved.
 
 ### 7.2 Authorized break-glass sequence
 
@@ -86,5 +86,5 @@ An AI-assisted review was performed out-of-band in this conversation. It is **no
 
 This is a **single-use, time-bounded exception** only for PR #11. It does not waive the general segregation-of-duties requirement for future changes, and it does not permit direct pushes to `main`, force pushes, branch deletion, runtime tests against RI-PY/RI-RS, changes to the target repositories, protocol-conformance claims, or release-gate authorization.
 
-The exception is not considered successfully executed until post-merge read-back verifies that administrator enforcement has been restored. Until the sequence and post-check are complete, `NC-ASIG-2026-10-17-PR10` remains **OPEN** and Etap 3 remains **BLOCKED**. Record actual execution times and merge identity in the PR #11 timeline; do not infer them in advance.
+The post-merge read-back now confirms that `enforce_admins.enabled = true` and that the expected review/status-check settings are present. However, neither the screenshot nor the available PR metadata establishes whether enforcement was temporarily disabled, when it was restored, or whether the prescribed sequence occurred exactly as written. Do not infer an immediate restore from a later `true` value. The source screenshot itself is not yet committed as a binary repository artifact; the evidence record documents its SHA-256 fingerprint and this limitation. `NC-ASIG-2026-10-17-PR10` remains **OPEN** and Etap 3 remains **BLOCKED** pending person-level independence disposition and complete evidence handling. Record no unverified transition times.
 
