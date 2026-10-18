@@ -26,7 +26,7 @@
         "rust-lang.rust-analyzer"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "{workspaceFolder}/.venv/bin/python",
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
         "python.testing.unittestEnabled": true,
         "python.testing.pytestEnabled": false,
         "editor.formatOnSave": false
