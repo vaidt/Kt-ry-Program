@@ -14,6 +14,29 @@ class CliTests(unittest.TestCase):
         choices = parser._subparsers._group_actions[0].choices
         self.assertEqual(set(choices), {"capture", "verify", "qualify", "audit", "runtime-python", "runtime-node", "runtime-rust"})
 
+    def test_capture_accepts_explicit_jcs_mode(self) -> None:
+        args = build_parser().parse_args(["capture", "--output", "../manifest.json", "--canonicalization", "rfc8785"])
+        self.assertEqual(args.canonicalization, "rfc8785")
+
+    def test_verify_accepts_required_cosign_signature(self) -> None:
+        args = build_parser().parse_args([
+            "verify", "--manifest", "../manifest.json", "--require-signature",
+            "--signature-bundle", "../manifest.sigstore.json",
+            "--certificate-identity", "expected-identity",
+            "--certificate-oidc-issuer", "https://token.actions.githubusercontent.com",
+        ])
+        self.assertTrue(args.require_signature)
+        self.assertEqual(args.signature_backend, "cosign-blob")
+
+    def test_verify_accepts_github_dsse_attestation(self) -> None:
+        args = build_parser().parse_args([
+            "verify", "--manifest", "../manifest.json", "--require-signature",
+            "--signature-backend", "github-attestation",
+            "--attestation-repository", "owner/repo",
+            "--attestation-signer-workflow", "owner/repo/.github/workflows/ci.yml",
+        ])
+        self.assertEqual(args.signature_backend, "github-attestation")
+
     def test_report_path_must_be_outside_measured_repository(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "repo"
