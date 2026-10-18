@@ -105,7 +105,7 @@ jobs:
       - name: Build wheel and source distribution
         run: |
           python -m build
-          sha256sum dist/* > dist/SHA256SUMS.txt
+          sha256sum dist/*.whl dist/*.tar.gz > dist/SHA256SUMS.txt
       - name: Upload distribution and checksums
         if: matrix.python-version == '3.11'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
