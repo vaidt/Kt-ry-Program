@@ -80,9 +80,9 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip
-          .venv/bin/python -m pip install --disable-pip-version-check . pip-audit==2.10.1
+          .venv/bin/python -m pip install --disable-pip-version-check ".[canonical]" pip-audit==2.10.1
       - name: Audit dependencies declared by the local project
-        run: .venv/bin/pip-audit . --strict --progress-spinner off
+        run: .venv/bin/pip-audit ".[canonical]" --strict --progress-spinner off
       # Keep the license gate inside this existing required status context:
       # ruleset 25306960 already requires python-dependency-audit. Do not change
       # the required-check contract just to run this validation-only negative control.
@@ -90,7 +90,7 @@ jobs:
         run: |
           python -m venv .license-venv
           .license-venv/bin/python -m pip install --disable-pip-version-check --upgrade pip
-          .license-venv/bin/python -m pip install --disable-pip-version-check . pip-licenses==5.5.5
+          .license-venv/bin/python -m pip install --disable-pip-version-check ".[canonical]" pip-licenses==5.5.5
       - name: Install synthetic GPL fixture when present on a negative-control branch
         shell: bash
         run: |
