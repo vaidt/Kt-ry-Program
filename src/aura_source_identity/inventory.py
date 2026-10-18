@@ -4,9 +4,9 @@ from __future__ import annotations
 import os
 import subprocess
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Callable
 
-from .canonical import object_sha256, sha256_hex
+from .canonical import ASIG_JSON_SORTED_V1, RFC8785_JCS, object_sha256, sha256_hex
 
 SCHEMA_VERSION = 1
 MANIFEST_KIND = "AURA_SOURCE_IDENTITY_MANIFEST"
@@ -122,7 +122,12 @@ def create_manifest(
     repository: str | None = None,
     exclude_names: set[str] | None = None,
     exclude_paths: set[str] | None = None,
+    canonicalization: str = ASIG_JSON_SORTED_V1,
 ) -> dict[str, Any]:
+    """Capture legacy ASIG or explicitly selected RFC 8785/JCS metadata."""
+    if canonicalization not in {ASIG_JSON_SORTED_V1, RFC8785_JCS}:
+        raise ManifestError(f"unsupported canonicalization: {canonicalization!r}")
+    use_jcs = canonicalization == RFC8785_JCS
     root = root.resolve(strict=True)
     files = inventory_files(root, exclude_names=exclude_names, exclude_paths=exclude_paths)
     commit_sha = _git(root, "rev-parse", "HEAD")
@@ -140,7 +145,7 @@ def create_manifest(
         "inventory": {
             "file_count": len(files),
             "files": files,
-            "source_tree_sha256": object_sha256(files),
+            "source_tree_sha256": object_sha256(files, strict_rfc8785=use_jcs),
         },
         "scope": {
             "excluded_names": sorted(set(DEFAULT_EXCLUDED_NAMES) | (exclude_names or set())),
@@ -149,7 +154,9 @@ def create_manifest(
         },
         "hash_contract": "SHA-256 over ASIG metadata only; not Aura Protocol canonicalization",
     }
-    body["manifest_sha256"] = object_sha256(body)
+    if use_jcs:
+        body["canonicalization"] = RFC8785_JCS
+    body["manifest_sha256"] = object_sha256(body, strict_rfc8785=use_jcs)
     return body
 
 
@@ -162,6 +169,9 @@ def _validate_manifest_shape(manifest: Any) -> None:
         raise ManifestError("manifest kind is invalid")
     if not isinstance(manifest.get("git"), dict) or not isinstance(manifest.get("inventory"), dict):
         raise ManifestError("manifest is missing git or inventory object")
+    canonicalization = manifest.get("canonicalization", ASIG_JSON_SORTED_V1)
+    if canonicalization not in {ASIG_JSON_SORTED_V1, RFC8785_JCS}:
+        raise ManifestError(f"unsupported canonicalization: {canonicalization!r}")
     files = manifest["inventory"].get("files")
     if not isinstance(files, list):
         raise ManifestError("manifest inventory.files must be an array")
@@ -177,16 +187,108 @@ def _validate_manifest_shape(manifest: Any) -> None:
         seen.add(path)
 
 
-def verify_manifest(manifest: Any, root: Path) -> dict[str, Any]:
-    """Validate manifest integrity and compare it to the current checkout."""
+
+def _signature_check(
+    signature_verifier: Callable[[], Any] | None,
+) -> tuple[str, bool | None, str | None, str | None]:
+    """Return (status, signature_valid, backend, error), fail-closed on verifier errors."""
+    if signature_verifier is None:
+        return "missing", None, None, None
+    try:
+        raw = signature_verifier()
+    except Exception as exc:
+        return "unverifiable", None, None, f"signature verifier raised: {exc}"[:1000]
+    backend = None
+    error = None
+    if isinstance(raw, bool):
+        status = "valid" if raw else "invalid"
+    elif isinstance(raw, str):
+        status = raw.lower()
+    elif isinstance(raw, dict):
+        status = str(raw.get("status", "unverifiable")).lower()
+        backend_value = raw.get("backend")
+        backend = backend_value if isinstance(backend_value, str) else None
+        error_value = raw.get("error")
+        error = str(error_value)[:1000] if error_value else None
+    else:
+        return "unverifiable", None, None, "signature verifier returned an unsupported result"
+    if status not in {"valid", "missing", "invalid", "unverifiable"}:
+        return "unverifiable", None, backend, f"unrecognized signature verifier status: {status!r}"[:1000]
+    signature_valid = True if status == "valid" else False if status == "invalid" else None
+    return status, signature_valid, backend, error
+
+
+def _apply_signature_policy(
+    result: dict[str, Any],
+    *,
+    require_signature: bool,
+    signature_status: str,
+    signature_valid: bool | None,
+    signature_backend: str | None,
+    signature_error: str | None,
+) -> dict[str, Any]:
+    source_status = result.get("status", "UNKNOWN")
+    result["source_status"] = source_status
+    result["signature_policy"] = "required" if require_signature else "optional"
+    result["signature_status"] = signature_status
+    result["signature_valid"] = signature_valid
+    result["signature_backend"] = signature_backend
+    if signature_error:
+        result["signature_error"] = signature_error
+    errors = result.setdefault("errors", [])
+    if signature_status == "invalid":
+        errors.append("manifest_signature_invalid")
+        result["status"] = "MISMATCH"
+    elif source_status == "MISMATCH":
+        result["status"] = "MISMATCH"
+    elif signature_status == "unverifiable":
+        errors.append("manifest_signature_unverifiable")
+        result["status"] = "UNKNOWN"
+    elif require_signature and signature_status == "missing":
+        errors.append("manifest_missing_required_signature")
+        result["status"] = "UNKNOWN"
+    else:
+        result["status"] = source_status
+    return result
+
+
+def verify_manifest(
+    manifest: Any,
+    root: Path,
+    *,
+    require_signature: bool = False,
+    signature_verifier: Callable[[], Any] | None = None,
+) -> dict[str, Any]:
+    """Verify manifest integrity, current source identity, and optional detached signature.
+
+    Signatures stay in sidecar bundles or GitHub DSSE attestations rather than
+    being embedded into the manifest hash input. Legacy manifests without a
+    canonicalization field continue to use ASIG_JSON_SORTED_V1.
+
+    Invalid signatures force MISMATCH. Missing signatures under required policy
+    and signatures that cannot be verified force UNKNOWN, unless source evidence
+    independently requires MISMATCH.
+    """
     try:
         _validate_manifest_shape(manifest)
     except ManifestError as exc:
-        return {"status": "UNKNOWN", "manifest_integrity": False, "errors": [str(exc)]}
+        signature_status = "unverifiable" if signature_verifier is not None else "missing"
+        result = {"status": "UNKNOWN", "manifest_integrity": False, "errors": [str(exc)]}
+        return _apply_signature_policy(
+            result,
+            require_signature=require_signature,
+            signature_status=signature_status,
+            signature_valid=None,
+            signature_backend=None,
+            signature_error="signature verification skipped because manifest shape is invalid" if signature_verifier else None,
+        )
 
+    signature_status, signature_valid, signature_backend, signature_error = _signature_check(signature_verifier)
+    canonicalization = manifest.get("canonicalization", ASIG_JSON_SORTED_V1)
+    use_jcs = canonicalization == RFC8785_JCS
     body = dict(manifest)
     claimed_hash = body.pop("manifest_sha256", None)
-    computed_hash = object_sha256(body)
+    computed_hash = object_sha256(body, strict_rfc8785=use_jcs)
     integrity_ok = isinstance(claimed_hash, str) and claimed_hash == computed_hash
     errors: list[str] = []
     if not integrity_ok:
@@ -199,10 +301,28 @@ def verify_manifest(manifest: Any, root: Path) -> dict[str, Any]:
     try:
         actual_files = inventory_files(root, exclude_names=excluded_names, exclude_paths=excluded_paths)
     except (OSError, ManifestError) as exc:
-        return {"status": "UNKNOWN", "manifest_integrity": integrity_ok, "errors": errors + [str(exc)]}
+        result = {
+            "status": "UNKNOWN",
+            "manifest_integrity": integrity_ok,
+            "source_files_match": False,
+            "commit_match": False,
+            "git_tree_match": False,
+            "working_tree_clean": None,
+            "source_tree_sha256": None,
+            "manifest_sha256": claimed_hash,
+            "errors": errors + [str(exc)],
+        }
+        return _apply_signature_policy(
+            result,
+            require_signature=require_signature,
+            signature_status=signature_status,
+            signature_valid=signature_valid,
+            signature_backend=signature_backend,
+            signature_error=signature_error,
+        )
 
     source_files_ok = actual_files == manifest["inventory"]["files"]
-    actual_tree_sha = object_sha256(actual_files)
+    actual_tree_sha = object_sha256(actual_files, strict_rfc8785=use_jcs)
     expected_tree_sha = manifest["inventory"].get("source_tree_sha256")
     if not source_files_ok:
         errors.append("current source inventory differs from captured inventory")
@@ -226,17 +346,22 @@ def verify_manifest(manifest: Any, root: Path) -> dict[str, Any]:
     if expected_tree_sha != actual_tree_sha:
         errors.append("source_tree_sha256 does not match the captured file list")
 
-    can_prove_git = all((current_commit, current_tree, current_clean is not None,
-                         recorded_git.get("commit_sha"), recorded_git.get("tree_sha")))
+    can_prove_git = all((
+        current_commit, current_tree, current_clean is not None,
+        recorded_git.get("commit_sha"), recorded_git.get("tree_sha"),
+    ))
     if not can_prove_git:
-        status = "UNKNOWN"
-    elif not integrity_ok or not source_files_ok or not commit_ok or not git_tree_ok or not clean_ok or expected_tree_sha != actual_tree_sha:
-        status = "MISMATCH"
+        source_status = "UNKNOWN"
+    elif (
+        not integrity_ok or not source_files_ok or not commit_ok or not git_tree_ok
+        or not clean_ok or expected_tree_sha != actual_tree_sha
+    ):
+        source_status = "MISMATCH"
     else:
-        status = "EXACT_MATCH"
+        source_status = "EXACT_MATCH"
 
-    return {
-        "status": status,
+    result = {
+        "status": source_status,
         "manifest_integrity": integrity_ok,
         "source_files_match": source_files_ok,
         "commit_match": commit_ok,
@@ -244,5 +369,14 @@ def verify_manifest(manifest: Any, root: Path) -> dict[str, Any]:
         "working_tree_clean": current_clean,
         "source_tree_sha256": actual_tree_sha,
         "manifest_sha256": claimed_hash,
+        "canonicalization": canonicalization,
         "errors": errors,
     }
+    return _apply_signature_policy(
+        result,
+        require_signature=require_signature,
+        signature_status=signature_status,
+        signature_valid=signature_valid,
+        signature_backend=signature_backend,
+        signature_error=signature_error,
+    )
