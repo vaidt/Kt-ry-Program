@@ -1,0 +1,75 @@
+name: ASIG Pages Build-Only Validation
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/jekyll-gh-pages.yml"
+      - ".github/workflows/pages-build-only-validation.yml"
+  push:
+    branches:
+      - "infra/pages-build-only-validation-*"
+    paths:
+      - ".github/workflows/jekyll-gh-pages.yml"
+      - ".github/workflows/pages-build-only-validation.yml"
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  actionlint:
+    name: actionlint workflow syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Run actionlint on CI and Pages workflows
+        run: >-
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          .github/workflows/ci.yml
+          .github/workflows/jekyll-gh-pages.yml
+          .github/workflows/pages-build-only-validation.yml
+
+  build-only:
+    name: Build Jekyll site without deployment
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Configure Pages metadata without enabling Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
+        with:
+          enablement: false
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697
+        with:
+          source: ./
+          destination: ./_site
+      - name: Verify generated site is non-empty
+        run: |
+          test -d _site
+          test -n "$(find _site -type f -print -quit)"
+      - name: Archive Pages-compatible artifact
+        shell: bash
+        run: |
+          tar \
+            --dereference --hard-dereference \
+            --directory "$GITHUB_WORKSPACE/_site" \
+            -cvf "$RUNNER_TEMP/artifact.tar" \
+            --exclude=.git \
+            --exclude=.github \
+            .
+      - name: Upload isolated build artifact (no deployment)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: asig-pages-build-only-${{ github.sha }}
+          path: ${{ runner.temp }}/artifact.tar
+          if-no-files-found: error
+          retention-days: 1
