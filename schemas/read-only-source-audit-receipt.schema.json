@@ -48,6 +48,13 @@
       "required": ["status", "manifest_integrity", "source_files_match", "commit_match", "git_tree_match"],
       "properties": {
         "status": { "enum": ["EXACT_MATCH", "MISMATCH", "UNKNOWN"] },
+        "source_status": { "enum": ["EXACT_MATCH", "MISMATCH", "UNKNOWN"] },
+        "signature_policy": { "enum": ["required", "optional"] },
+        "signature_status": { "enum": ["valid", "missing", "invalid", "unverifiable"] },
+        "signature_valid": { "type": ["boolean", "null"] },
+        "signature_backend": { "type": ["string", "null"] },
+        "signature_error": { "type": "string" },
+        "canonicalization": { "enum": ["ASIG_JSON_SORTED_V1", "RFC8785_JCS"] },
         "manifest_integrity": { "type": "boolean" },
         "source_files_match": { "type": "boolean" },
         "commit_match": { "type": "boolean" },
